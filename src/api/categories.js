@@ -9,9 +9,12 @@ import {
   updateDoc,
   deleteDoc,
   serverTimestamp,
+  getDoc,
 } from "firebase/firestore";
-import { db, storage } from "../firebase";
+import { db } from "../firebase";
+
 import {
+  getStorage,
   ref,
   uploadBytes,
   getDownloadURL,
@@ -19,69 +22,72 @@ import {
 } from "firebase/storage";
 
 const COLLECTION = "categories";
+const storage = getStorage();
 
-// ----------------- Helpers: filename & storage -----------------
+/* =======================================
+   🔹 SLUG HELPERS
+   ======================================= */
 
-function sanitizeFileName(name) {
-  if (!name) return "image";
-  return name
-    .replace(/\s+/g, "-")
-    .replace(/[^a-zA-Z0-9.\-_]/g, "");
+// "North India Pilgrimage" -> "north-india-pilgrimage"
+function slugifyCategoryName(rawName) {
+  const base = (rawName || "").trim();
+  if (!base) return "category";
+
+  let slug = base
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-") // non-alphanumeric -> "-"
+    .replace(/^-+|-+$/g, ""); // trim "-"
+
+  // keep reasonable length
+  slug = slug.slice(0, 80);
+
+  return slug || "category";
 }
 
-/**
- * Upload a category image to Firebase Storage.
- * type: "tour" | "blog"  (folder separation)
- * Path: categories/{type}/{timestamp}-{filename}
- */
-export async function uploadCategoryImage(file, type = "tour") {
-  if (!file) throw new Error("File is required");
+// Make slug unique across all categories (tour + blog)
+// if "north-india" exists -> "north-india-2", "north-india-3", ...
+async function generateUniqueCategorySlug(name) {
+  const base = slugifyCategoryName(name);
+  let candidate = base;
+  let counter = 2;
 
-  const safeType = type === "blog" ? "blog" : "tour";
-  const safeName = sanitizeFileName(file.name);
-  const filePath = `categories/${safeType}/${Date.now()}-${safeName}`;
+  // simple safety loop
+  for (let i = 0; i < 20; i++) {
+    const qSlug = query(
+      collection(db, COLLECTION),
+      where("slug", "==", candidate)
+    );
+    const snap = await getDocs(qSlug);
 
-  const storageRef = ref(storage, filePath);
-  await uploadBytes(storageRef, file);
-  const url = await getDownloadURL(storageRef);
-
-  return { url, path: filePath };
-}
-
-/**
- * Delete a category image by its download URL.
- * If it's not a Firebase Storage URL, we just clear it on UI side.
- */
-export async function deleteCategoryImageByUrl(imageUrl) {
-  if (!imageUrl) return;
-
-  try {
-    // Only try Storage delete if this looks like a Firebase URL
-    if (imageUrl.includes("firebasestorage.googleapis.com")) {
-      const storageRef = ref(storage, imageUrl);
-      await deleteObject(storageRef);
+    if (snap.empty) {
+      return candidate;
     }
-  } catch (err) {
-    console.error("Error deleting category image from storage", err);
+
+    candidate = `${base}-${counter++}`;
   }
+
+  // worst-case fallback
+  return `${base}-${Date.now()}`;
 }
+
+/* =======================================
+   🔹 FIRESTORE: CRUD + LIST
+   ======================================= */
 
 /**
  * Get categories of a given type ("tour" or "blog").
- * We filter in Firestore and sort by createdAt in JS
- * to avoid composite-index issues.
+ * Sorted by createdAt desc (newest first).
  */
 export async function getCategoriesByType(type) {
-  const q = query(collection(db, COLLECTION), where("type", "==", type));
-
-  const snap = await getDocs(q);
+  const qRef = query(collection(db, COLLECTION), where("type", "==", type));
+  const snap = await getDocs(qRef);
 
   const items = snap.docs.map((d) => ({
     id: d.id,
     ...d.data(),
   }));
 
-  // sort newest first, safely handling missing createdAt
+  // newest first, safely handle missing createdAt
   items.sort((a, b) => {
     const ta =
       typeof a.createdAt?.toMillis === "function"
@@ -97,9 +103,17 @@ export async function getCategoriesByType(type) {
   return items;
 }
 
+/**
+ * Create category (tour or blog).
+ * - generates a unique slug from name
+ */
 export async function createCategory({ name, description, imageUrl, type }) {
+  const cleanName = (name || "").trim();
+  const slug = await generateUniqueCategorySlug(cleanName || "category");
+
   const payload = {
-    name: name.trim(),
+    name: cleanName,
+    slug, // ✅ stored in Firestore
     description: description?.trim() || "",
     imageUrl: imageUrl?.trim() || "",
     type, // "tour" | "blog"
@@ -109,21 +123,128 @@ export async function createCategory({ name, description, imageUrl, type }) {
     updatedAt: serverTimestamp(),
   };
 
-  const ref = await addDoc(collection(db, COLLECTION), payload);
-  return { id: ref.id, ...payload };
+  const refDoc = await addDoc(collection(db, COLLECTION), payload);
+  return { id: refDoc.id, ...payload };
 }
 
+/**
+ * Update category.
+ * - If category has NO slug yet (old data), we create one from new/old name.
+ * - If slug already exists, we keep it (URL stable).
+ */
 export async function updateCategory(id, data) {
-  const ref = doc(db, COLLECTION, id);
-  await updateDoc(ref, { ...data, updatedAt: serverTimestamp() });
+  const refDoc = doc(db, COLLECTION, id);
+
+  // load existing to see if slug is missing
+  let slugToUse;
+  try {
+    const snap = await getDoc(refDoc);
+    if (snap.exists()) {
+      const existing = snap.data();
+      slugToUse = existing.slug;
+      if (!slugToUse) {
+        const nameSource =
+          (data.name && data.name.trim()) ||
+          (existing.name && existing.name.trim()) ||
+          "category";
+        slugToUse = await generateUniqueCategorySlug(nameSource);
+      }
+    }
+  } catch (err) {
+    console.error("Error reading category before update (slug)", err);
+  }
+
+  const finalData = {
+    ...data,
+    updatedAt: serverTimestamp(),
+  };
+
+  if (slugToUse) {
+    finalData.slug = slugToUse;
+  }
+
+  await updateDoc(refDoc, finalData);
 }
 
 export async function deleteCategory(id) {
-  const ref = doc(db, COLLECTION, id);
-  await deleteDoc(ref);
+  const refDoc = doc(db, COLLECTION, id);
+  await deleteDoc(refDoc);
 }
 
 export async function setCategoryActive(id, isActive) {
-  const ref = doc(db, COLLECTION, id);
-  await updateDoc(ref, { isActive, updatedAt: serverTimestamp() });
+  const refDoc = doc(db, COLLECTION, id);
+  await updateDoc(refDoc, {
+    isActive,
+    updatedAt: serverTimestamp(),
+  });
+}
+
+/* =======================================
+   🔹 STORAGE: IMAGE UPLOAD / DELETE
+   ======================================= */
+
+/**
+ * Upload a category image (tour / blog).
+ * - type: "tour" | "blog" → used in folder path
+ * - returns public download URL
+ *
+ * Path example:
+ *   categories/tour/1700000000000-image-name.webp
+ */
+export async function uploadCategoryImage(file, type = "tour") {
+  if (!file) throw new Error("No file provided");
+
+  const safeType = type || "tour";
+
+  const originalName = file.name || "image";
+  const ext = originalName.includes(".")
+    ? originalName.split(".").pop()
+    : "jpg";
+
+  const safeName = originalName
+    .toLowerCase()
+    .replace(/[^a-z0-9.]+/g, "-");
+
+  const fileName = `${Date.now()}-${safeName}`;
+  const path = `categories/${safeType}/${fileName}`;
+
+  const storageRef = ref(storage, path);
+  await uploadBytes(storageRef, file);
+  const url = await getDownloadURL(storageRef);
+
+  return url;
+}
+
+// Extract "categories/..." path from the Firebase download URL
+function extractPathFromStorageUrl(url) {
+  try {
+    const u = new URL(url);
+    // /v0/b/<bucket>/o/categories%2Ftour%2Ffile.webp
+    const segments = u.pathname.split("/o/");
+    if (segments.length < 2) return null;
+    const encodedPath = segments[1]; // "categories%2Ftour%2Ffile.webp"
+    const path = decodeURIComponent(encodedPath);
+    return path;
+  } catch (err) {
+    console.error("Invalid storage URL:", url, err);
+    return null;
+  }
+}
+
+/**
+ * Delete a category image given its download URL.
+ * Safe to call even if url is empty or invalid.
+ */
+export async function deleteCategoryImageByUrl(url) {
+  if (!url) return;
+
+  try {
+    const path = extractPathFromStorageUrl(url);
+    if (!path) return;
+
+    const storageRef = ref(storage, path);
+    await deleteObject(storageRef);
+  } catch (err) {
+    console.error("Error deleting category image from storage:", err);
+  }
 }
