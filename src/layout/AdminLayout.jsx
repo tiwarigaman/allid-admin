@@ -82,7 +82,7 @@ function SidebarContent({ onNavigate }) {
             width: 44,
             height: 44,
             bgcolor: "#1677ff",
-            fontWeight: 800,
+            fontWeight: 600,
             boxShadow: "0 16px 30px rgba(22,119,255,0.25)",
           }}
         >
@@ -91,7 +91,7 @@ function SidebarContent({ onNavigate }) {
         <Box sx={{ minWidth: 0 }}>
           <Typography
             sx={{
-              fontWeight: 800,
+              fontWeight: 700,
               fontSize: 18,
               color: "#0f172a",
               lineHeight: 1.1,
@@ -118,7 +118,7 @@ function SidebarContent({ onNavigate }) {
         </ListItemIcon>
         <ListItemText
           primary="Dashboard"
-          primaryTypographyProps={{ fontWeight: 700 }}
+          primaryTypographyProps={{ fontWeight: 500 }}
         />
       </ListItemButton>
 
@@ -134,7 +134,7 @@ function SidebarContent({ onNavigate }) {
         </ListItemIcon>
         <ListItemText
           primary="Tours"
-          primaryTypographyProps={{ fontWeight: 700 }}
+          primaryTypographyProps={{ fontWeight: 500, }}
         />
       </ListItemButton>
 
@@ -150,7 +150,7 @@ function SidebarContent({ onNavigate }) {
         </ListItemIcon>
         <ListItemText
           primary="Blogs"
-          primaryTypographyProps={{ fontWeight: 700 }}
+          primaryTypographyProps={{ fontWeight: 500 }}
         />
       </ListItemButton>
 
@@ -171,7 +171,7 @@ function SidebarContent({ onNavigate }) {
         </ListItemIcon>
         <ListItemText
           primary="Categories"
-          primaryTypographyProps={{ fontWeight: 800 }}
+          primaryTypographyProps={{ fontWeight: 600 }}
         />
         {openCat ? (
           <KeyboardArrowDownRoundedIcon />
@@ -204,7 +204,7 @@ function SidebarContent({ onNavigate }) {
             </ListItemIcon>
             <ListItemText
               primary="Tour Categories"
-              primaryTypographyProps={{ fontWeight: 700 }}
+              primaryTypographyProps={{ fontWeight: 500 }}
             />
           </ListItemButton>
 
@@ -230,7 +230,7 @@ function SidebarContent({ onNavigate }) {
             </ListItemIcon>
             <ListItemText
               primary="Blog Categories"
-              primaryTypographyProps={{ fontWeight: 700 }}
+              primaryTypographyProps={{ fontWeight: 500 }}
             />
           </ListItemButton>
         </Box>
@@ -248,7 +248,7 @@ function SidebarContent({ onNavigate }) {
         </ListItemIcon>
         <ListItemText
           primary="Enquiries"
-          primaryTypographyProps={{ fontWeight: 700 }}
+          primaryTypographyProps={{ fontWeight: 500 }}
         />
       </ListItemButton>
     </List>
@@ -309,7 +309,7 @@ export default function AdminLayout() {
       sx={{
         height: "100vh",
         background:
-          "radial-gradient(1200px 700px at 20% 10%, rgba(27,99,255,0.10), transparent 55%), radial-gradient(1000px 700px at 70% 65%, rgba(22,163,74,0.08), transparent 60%), #F6F7FB",
+          "radial-gradient(1200px 500px at 20% 10%, rgba(27,99,255,0.10), transparent 55%), radial-gradient(1000px 500px at 70% 65%, rgba(22,163,74,0.08), transparent 60%), #F6F7FB",
         display: "flex",
         overflow: "hidden", // window scroll disable, inner scroll only
       }}
@@ -438,8 +438,6 @@ export default function AdminLayout() {
                 pl: 1,
                 pr: 1.2,
                 py: 0.7,
-                borderRadius: "999px",
-                border: "2px solid rgba(11,99,246,0.25)",
                 background: "rgba(255,255,255,0.92)",
                 display: "flex",
                 alignItems: "center",
@@ -448,15 +446,15 @@ export default function AdminLayout() {
               }}
             >
               <Avatar
-                sx={{ width: 38, height: 38, bgcolor: "#1677ff", fontWeight: 900 }}
+                sx={{ width: 38, height: 38, fontWeight: 700 }}
               >
                 A
               </Avatar>
               <Box sx={{ lineHeight: 1.05 }}>
                 <Typography
                   sx={{
-                    fontWeight: 900,
-                    fontSize: 14,
+                    fontWeight: 700,
+                    fontSize: 12,
                     color: "#0f172a",
                   }}
                 >
@@ -482,7 +480,6 @@ export default function AdminLayout() {
               PaperProps={{
                 sx: {
                   mt: 1,
-                  borderRadius: 3,
                   border: "1px solid rgba(15,23,42,0.08)",
                   minWidth: 220,
                   overflow: "hidden",
@@ -504,7 +501,7 @@ export default function AdminLayout() {
               <Divider />
               <MenuItem
                 onClick={() => setUserMenuAnchor(null)}
-                sx={{ color: "#ef4444", fontWeight: 800 }}
+                sx={{ color: "#ef4444", fontWeight: 600 }}
               >
                 <ListItemIcon sx={{ color: "#ef4444" }}>
                   <LogoutRoundedIcon fontSize="small" />

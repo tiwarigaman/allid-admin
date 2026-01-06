@@ -37,7 +37,7 @@ function StatCard({ title, value, delta, icon, iconBg }) {
       <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
         <Box sx={{ flex: 1, minWidth: 0 }}>
           <Typography
-            sx={{ fontSize: 13.1, fontWeight: 700, color: "rgba(15,23,42,0.52)" }}
+            sx={{ fontSize: 13.1, fontWeight: 500, color: "rgba(15,23,42,0.52)" }}
           >
             {title}
           </Typography>
@@ -45,8 +45,8 @@ function StatCard({ title, value, delta, icon, iconBg }) {
           <Typography
             sx={{
               mt: 0.9,
-              fontSize: 32,
-              fontWeight: 850,
+              fontSize: 28,
+              fontWeight: 600,
               letterSpacing: "-0.03em",
               color: "#0F172A",
               lineHeight: 1,
@@ -64,14 +64,14 @@ function StatCard({ title, value, delta, icon, iconBg }) {
             }}
           >
             <Typography
-              sx={{ fontSize: 13, fontWeight: 900, color: "#16A34A" }}
+              sx={{ fontSize: 13, fontWeight: 500, color: "#16A34A" }}
             >
               {delta}
             </Typography>
             <Typography
               sx={{
                 fontSize: 13,
-                fontWeight: 650,
+                fontWeight: 550,
                 color: "rgba(15,23,42,0.52)",
               }}
             >
@@ -130,7 +130,7 @@ function QuickAction({ bg, iconBg, icon, title, sub }) {
 
       <Box sx={{ flex: 1, minWidth: 0 }}>
         <Typography
-          sx={{ fontSize: 14.4, fontWeight: 850, color: "#0F172A" }}
+          sx={{ fontSize: 12.4, fontWeight: 600, color: "#0F172A" }}
           noWrap
         >
           {title}
@@ -138,7 +138,7 @@ function QuickAction({ bg, iconBg, icon, title, sub }) {
         <Typography
           sx={{
             fontSize: 13.2,
-            fontWeight: 650,
+            fontWeight: 550,
             color: "rgba(15,23,42,0.52)",
             mt: 0.2,
           }}
@@ -166,7 +166,7 @@ const PublishedChip = () => (
       borderRadius: "999px",
       bgcolor: "rgba(22,163,74,0.14)",
       color: "#15803D",
-      fontWeight: 850,
+      fontWeight: 600,
     }}
   />
 );
@@ -190,7 +190,7 @@ function ListRow({ icon, title, sub, showChip = false }) {
 
       <Box sx={{ flex: 1, minWidth: 0 }}>
         <Typography
-          sx={{ fontSize: 14.4, fontWeight: 850, color: "#0F172A" }}
+          sx={{ fontSize: 12.4, fontWeight: 600, color: "#0F172A" }}
           noWrap
         >
           {title}
@@ -198,7 +198,7 @@ function ListRow({ icon, title, sub, showChip = false }) {
         <Typography
           sx={{
             fontSize: 13.2,
-            fontWeight: 650,
+            fontWeight: 550,
             color: "rgba(15,23,42,0.52)",
             mt: 0.15,
           }}
@@ -263,8 +263,8 @@ export default function Dashboard() {
         <Box sx={{ minWidth: 240 }}>
           <Typography
             sx={{
-              fontSize: { xs: 24, sm: 28, md: 32 },
-              fontWeight: 800,
+              fontSize: { xs: 22, sm: 25, md: 28 },
+              fontWeight: 700,
               letterSpacing: "-0.03em",
               color: "#0F172A",
               lineHeight: 1.12,
@@ -276,8 +276,8 @@ export default function Dashboard() {
           <Typography
             sx={{
               mt: 0.6,
-              fontSize: 14.4,
-              fontWeight: 650,
+              fontSize: 12.4,
+              fontWeight: 550,
               color: "rgba(15,23,42,0.52)",
             }}
           >
@@ -292,7 +292,7 @@ export default function Dashboard() {
             sx={{
               height: 44,
               borderRadius: "999px",
-              fontWeight: 850,
+              fontWeight: 600,
               color: "#2563EB",
               borderColor: "rgba(37,99,235,0.40)",
               background: "rgba(255,255,255,0.88)",
@@ -313,7 +313,7 @@ export default function Dashboard() {
             sx={{
               height: 44,
               borderRadius: "999px",
-              fontWeight: 850,
+              fontWeight: 600,
               bgcolor: "#16A34A",
               px: 2.1,
               "&:hover": { bgcolor: "#15803D" },
@@ -388,7 +388,7 @@ export default function Dashboard() {
             }}
           >
             <Typography
-              sx={{ fontSize: 17.4, fontWeight: 900, color: "#0F172A" }}
+              sx={{ fontSize: 17.4, fontWeight: 500, color: "#0F172A" }}
             >
               Revenue Overview
             </Typography>
@@ -400,7 +400,7 @@ export default function Dashboard() {
               sx={{
                 height: 40,
                 borderRadius: "999px",
-                fontWeight: 850,
+                fontWeight: 600,
                 minWidth: 150,
                 background: "rgba(255,255,255,0.88)",
                 "& .MuiSelect-select": { py: 0.8 },
@@ -462,16 +462,16 @@ export default function Dashboard() {
               </Box>
 
               <Typography
-                sx={{ fontWeight: 900, fontSize: 16.8, color: "#0F172A" }}
+                sx={{ fontWeight: 500, fontSize: 16.8, color: "#0F172A" }}
               >
                 Revenue chart visualization
               </Typography>
               <Typography
                 sx={{
                   mt: 0.7,
-                  fontWeight: 650,
+                  fontWeight: 550,
                   color: "rgba(15,23,42,0.52)",
-                  fontSize: 14.1,
+                  fontSize: 12.1,
                 }}
               >
                 Chart component would be integrated here
@@ -482,7 +482,7 @@ export default function Dashboard() {
 
         <Paper sx={{ ...cardSX, p: { xs: 2, md: 2.4 } }}>
           <Typography
-            sx={{ fontSize: 17.4, fontWeight: 900, color: "#0F172A", mb: 1.6 }}
+            sx={{ fontSize: 17.4, fontWeight: 500, color: "#0F172A", mb: 1.6 }}
           >
             Quick Actions
           </Typography>
@@ -531,11 +531,11 @@ export default function Dashboard() {
             }}
           >
             <Typography
-              sx={{ fontSize: 17.4, fontWeight: 900, color: "#0F172A" }}
+              sx={{ fontSize: 17.4, fontWeight: 500, color: "#0F172A" }}
             >
               Recent Tours
             </Typography>
-            <Button sx={{ height: 34, fontWeight: 900, color: "#16A34A" }}>
+            <Button sx={{ height: 34, fontWeight: 500, color: "#16A34A" }}>
               View All
             </Button>
           </Box>
@@ -563,11 +563,11 @@ export default function Dashboard() {
             }}
           >
             <Typography
-              sx={{ fontSize: 17.4, fontWeight: 900, color: "#0F172A" }}
+              sx={{ fontSize: 17.4, fontWeight: 500, color: "#0F172A" }}
             >
               Recent Blogs
             </Typography>
-            <Button sx={{ height: 34, fontWeight: 900, color: "#16A34A" }}>
+            <Button sx={{ height: 34, fontWeight: 500, color: "#16A34A" }}>
               View All
             </Button>
           </Box>
