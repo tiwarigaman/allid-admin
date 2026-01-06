@@ -31,6 +31,7 @@ import LocationOnOutlinedIcon from "@mui/icons-material/LocationOnOutlined";
 import ScheduleOutlinedIcon from "@mui/icons-material/ScheduleOutlined";
 import ArrowBackIosNewRoundedIcon from "@mui/icons-material/ArrowBackIosNewRounded";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+
 import {
   getTours,
   createTour,
@@ -40,11 +41,14 @@ import {
   uploadTourFeatureImage,
   uploadTourGalleryImage,
   deleteTourImageByUrl,
+  setTourFeatured, // ✅ added
 } from "../api/tours";
 import { getCategoriesByType } from "../api/categories";
+
 // ---------- Helpers for UI ----------
 const cardShadow = "0 20px 60px rgba(2, 8, 23, 0.08)";
 const cardBorder = "1px solid rgba(15, 23, 42, 0.08)";
+
 // Slug preview (same rule as backend, but without uniqueness check)
 function slugPreviewFromTitle(title) {
   const base = (title || "").trim();
@@ -54,6 +58,7 @@ function slugPreviewFromTitle(title) {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
 }
+
 // Map Firestore tour doc → form state object
 function tourDocToForm(tour) {
   const galleryImages =
@@ -61,18 +66,22 @@ function tourDocToForm(tour) {
     tour.galleryImageUrls.length > 0
       ? tour.galleryImageUrls
       : [""];
+
   const highlights =
     Array.isArray(tour.highlights) && tour.highlights.length > 0
       ? tour.highlights
       : [""];
+
   const included =
     Array.isArray(tour.included) && tour.included.length > 0
       ? tour.included
       : [""];
+
   const excluded =
     Array.isArray(tour.excluded) && tour.excluded.length > 0
       ? tour.excluded
       : [""];
+
   const itinerary =
     Array.isArray(tour.itinerary) && tour.itinerary.length > 0
       ? tour.itinerary.map((d) => ({
@@ -80,6 +89,7 @@ function tourDocToForm(tour) {
           description: d.description || "",
         }))
       : [{ dayTitle: "", description: "" }];
+
   return {
     title: tour.title || "",
     description: tour.description || "",
@@ -116,13 +126,16 @@ function tourDocToForm(tour) {
     metaKeywords: tour.metaKeywords || "",
   };
 }
+
 export default function Tours() {
   const [tab, setTab] = useState(0);
+
   // list state
   const [tours, setTours] = useState([]);
   const [loadingTours, setLoadingTours] = useState(false);
   const [queryText, setQueryText] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+
   // create/edit form state
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -151,21 +164,26 @@ export default function Tours() {
     metaDescription: "",
     metaKeywords: "",
   });
+
   // categories for dropdown (only tour categories)
   const [tourCategories, setTourCategories] = useState([]);
   const [loadingCategories, setLoadingCategories] = useState(false);
+
   // upload state (UX)
   const [uploadingFeature, setUploadingFeature] = useState(false);
   const [uploadingGallery, setUploadingGallery] = useState({}); // { index: bool }
+
   // selected files (for two-step Select + Upload UI)
   const [featureFile, setFeatureFile] = useState(null);
   const [featureFileName, setFeatureFileName] = useState("");
   const [galleryFiles, setGalleryFiles] = useState({}); // { index: File }
   const [galleryFileNames, setGalleryFileNames] = useState({}); // { index: string }
+
   // track uploaded images for *new* tours so we can delete on Cancel
   const [uploadedImagesToCleanup, setUploadedImagesToCleanup] = useState(
     []
   );
+
   // ------------- Load tours from API layer -------------
   const loadTours = useCallback(async () => {
     setLoadingTours(true);
@@ -178,9 +196,11 @@ export default function Tours() {
       setLoadingTours(false);
     }
   }, []);
+
   useEffect(() => {
     loadTours();
   }, [loadTours]);
+
   // ------------- Load tour categories for the dropdown -------------
   const loadTourCategories = useCallback(async () => {
     setLoadingCategories(true);
@@ -193,12 +213,14 @@ export default function Tours() {
       setLoadingCategories(false);
     }
   }, []);
+
   // Whenever we enter the "Create Tour" tab, refresh categories
   useEffect(() => {
     if (tab === 1) {
       loadTourCategories();
     }
   }, [tab, loadTourCategories]);
+
   // ------------- Filters for list tab -------------
   const filteredTours = useMemo(() => {
     const q = queryText.trim().toLowerCase();
@@ -215,10 +237,12 @@ export default function Tours() {
       return matchesQ && matchesStatus;
     });
   }, [tours, queryText, statusFilter]);
+
   // ------------- Form helpers -------------
   const updateField = (field, value) => {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
+
   const updateArrayItem = (field, index, value) => {
     setForm((prev) => {
       const arr = [...prev[field]];
@@ -226,12 +250,14 @@ export default function Tours() {
       return { ...prev, [field]: arr };
     });
   };
+
   const addArrayItem = (field, emptyValue) => {
     setForm((prev) => ({
       ...prev,
       [field]: [...prev[field], emptyValue],
     }));
   };
+
   const updateItineraryItem = (index, itemField, value) => {
     setForm((prev) => {
       const arr = [...prev.itinerary];
@@ -239,12 +265,14 @@ export default function Tours() {
       return { ...prev, itinerary: arr };
     });
   };
+
   const addItineraryDay = () => {
     setForm((prev) => ({
       ...prev,
       itinerary: [...prev.itinerary, { dayTitle: "", description: "" }],
     }));
   };
+
   const resetForm = () => {
     setForm({
       title: "",
@@ -275,6 +303,7 @@ export default function Tours() {
     setGalleryFiles({});
     setGalleryFileNames({});
   };
+
   // ------------- helper: copy to clipboard -------------
   const copyToClipboard = (text) => {
     if (!text) return;
@@ -296,6 +325,7 @@ export default function Tours() {
       window.prompt("Copy image URL:", text);
     }
   };
+
   // ------------- Image upload helpers (using API layer) -------------
   const handleFeatureFileSelect = (event) => {
     const file = event.target.files?.[0];
@@ -303,26 +333,31 @@ export default function Tours() {
     setFeatureFile(file);
     setFeatureFileName(file.name);
   };
+
   const handleUploadFeatureImage = async () => {
     if (!featureFile) {
       window.alert("Please select an image first.");
       return;
     }
+
     const maxSizeBytes = 3 * 1024 * 1024;
     if (featureFile.size > maxSizeBytes) {
       window.alert("Please upload an image smaller than 3MB.");
       return;
     }
+
     setUploadingFeature(true);
     try {
       const { url } = await uploadTourFeatureImage(featureFile);
       updateField("featureImageUrl", url);
+
       // Only track as temp if we're creating (not editing)
       if (!editingId) {
         setUploadedImagesToCleanup((prev) =>
           prev.includes(url) ? prev : [...prev, url]
         );
       }
+
       setFeatureFile(null);
       setFeatureFileName("");
     } catch (err) {
@@ -332,33 +367,39 @@ export default function Tours() {
       setUploadingFeature(false);
     }
   };
+
   const handleGalleryFileSelect = (index, event) => {
     const file = event.target.files?.[0];
     if (!file) return;
     setGalleryFiles((prev) => ({ ...prev, [index]: file }));
     setGalleryFileNames((prev) => ({ ...prev, [index]: file.name }));
   };
+
   const handleUploadGalleryImage = async (index) => {
     const file = galleryFiles[index];
     if (!file) {
       window.alert("Please select an image first.");
       return;
     }
+
     const maxSizeBytes = 3 * 1024 * 1024;
     if (file.size > maxSizeBytes) {
       window.alert("Please upload an image smaller than 3MB.");
       return;
     }
+
     setUploadingGallery((prev) => ({ ...prev, [index]: true }));
     try {
       const { url } = await uploadTourGalleryImage(file);
       updateArrayItem("galleryImages", index, url);
+
       // Only track as temp if we're creating (not editing)
       if (!editingId) {
         setUploadedImagesToCleanup((prev) =>
           prev.includes(url) ? prev : [...prev, url]
         );
       }
+
       setGalleryFiles((prev) => {
         const copy = { ...prev };
         delete copy[index];
@@ -376,14 +417,17 @@ export default function Tours() {
       setUploadingGallery((prev) => ({ ...prev, [index]: false }));
     }
   };
+
   // ------------- Delete individual images -------------
   const handleDeleteFeatureImage = async () => {
     const url = form.featureImageUrl;
     if (!url) return;
+
     const ok = window.confirm(
       "Delete this feature image from storage and clear it?"
     );
     if (!ok) return;
+
     try {
       await deleteTourImageByUrl(url);
     } catch (err) {
@@ -397,13 +441,16 @@ export default function Tours() {
       setFeatureFileName("");
     }
   };
+
   const handleDeleteGalleryImage = async (index) => {
     const url = form.galleryImages[index];
     if (!url) return;
+
     const ok = window.confirm(
       "Delete this gallery image from storage and clear it?"
     );
     if (!ok) return;
+
     try {
       await deleteTourImageByUrl(url);
     } catch (err) {
@@ -429,9 +476,11 @@ export default function Tours() {
       });
     }
   };
+
   // ------------- Save tour via API (create OR edit) -------------
   const handleSaveTour = async (e) => {
     e.preventDefault();
+
     if (!form.title || !form.description || !form.location) {
       window.alert("Please fill title, description and location.");
       return;
@@ -440,6 +489,7 @@ export default function Tours() {
       window.alert("Please select a tour category.");
       return;
     }
+
     setSaving(true);
     try {
       if (editingId) {
@@ -447,6 +497,7 @@ export default function Tours() {
       } else {
         await createTour(form);
       }
+
       resetForm();
       setEditingId(null);
       setUploadedImagesToCleanup([]);
@@ -458,12 +509,14 @@ export default function Tours() {
       setSaving(false);
     }
   };
+
   // ------------- Delete tour via API -------------
   const handleDeleteTour = async (id) => {
     const ok = window.confirm(
       "Are you sure you want to delete this tour?"
     );
     if (!ok) return;
+
     try {
       await deleteTour(id);
       setTours((prev) => prev.filter((t) => t.id !== id));
@@ -471,6 +524,7 @@ export default function Tours() {
       console.error("Error deleting tour:", err);
     }
   };
+
   // ------------- Edit tour (fill form & open tab) -------------
   const handleEditTour = (tour) => {
     setEditingId(tour.id);
@@ -482,17 +536,21 @@ export default function Tours() {
     setGalleryFileNames({});
     setTab(1);
   };
+
   // ------------- View tour (placeholder for user panel) -------------
   const handleViewTour = (tour) => {
-    const slug = tour.slug || slugPreviewFromTitle(tour.title) || "(slug-missing)";
+    const slug =
+      tour.slug || slugPreviewFromTitle(tour.title) || "(slug-missing)";
     window.alert(
       `TODO: Open public tour detail page at "/tours/${slug}" for "${tour.title}".`
     );
   };
+
   // ------------- Publish / unpublish (status toggle) -------------
   const handleToggleStatus = async (tour) => {
     const current = tour.status || "draft";
     const next = current === "published" ? "draft" : "published";
+
     try {
       await setTourStatus(tour.id, next);
       setTours((prev) =>
@@ -504,6 +562,51 @@ export default function Tours() {
       console.error("Error updating status:", err);
     }
   };
+
+  // ------------- Featured toggle (max 6) -------------
+  const handleToggleFeatured = async (tour) => {
+    const current =
+      tour.isFeatured === true ||
+      tour.isFeatured === "true" ||
+      tour.isFeatured === 1 ||
+      tour.isFeatured === "1";
+
+    // if turning ON → check how many are already featured
+    if (!current) {
+      const featuredCount = tours.filter((t) => {
+        const flag =
+          t.isFeatured === true ||
+          t.isFeatured === "true" ||
+          t.isFeatured === 1 ||
+          t.isFeatured === "1";
+        return flag;
+      }).length;
+
+      if (featuredCount >= 6) {
+        window.alert(
+          "You can only mark up to 6 tours as Featured. Unfeature another tour first."
+        );
+        return;
+      }
+    }
+
+    const nextFlag = !current;
+
+    try {
+      await setTourFeatured(tour.id, nextFlag);
+      setTours((prev) =>
+        prev.map((t) =>
+          t.id === tour.id ? { ...t, isFeatured: nextFlag } : t
+        )
+      );
+    } catch (err) {
+      console.error("Error updating featured flag:", err);
+      window.alert(
+        "Failed to update featured status. Please try again."
+      );
+    }
+  };
+
   // ------------- Cancel (new vs edit) -------------
   const handleCancel = async () => {
     if (editingId) {
@@ -512,12 +615,14 @@ export default function Tours() {
         "Discard changes to this tour and go back?"
       );
       if (!ok) return;
+
       resetForm();
       setEditingId(null);
       setUploadedImagesToCleanup([]);
       setTab(0);
       return;
     }
+
     // Creating a new tour
     const hasUploads = uploadedImagesToCleanup.length > 0;
     const ok = window.confirm(
@@ -526,6 +631,7 @@ export default function Tours() {
         : "Cancel this new tour and discard all changes?"
     );
     if (!ok) return;
+
     if (hasUploads) {
       const uniqueUrls = Array.from(
         new Set(uploadedImagesToCleanup)
@@ -538,11 +644,13 @@ export default function Tours() {
         }
       }
     }
+
     resetForm();
     setEditingId(null);
     setUploadedImagesToCleanup([]);
     setTab(0);
   };
+
   // ==========================================================
   // RENDER
   // ==========================================================
@@ -621,6 +729,7 @@ export default function Tours() {
           </Box>
         </>
       )}
+
       {/* Tabs (Tours / Create Tour) */}
       <Box sx={{ mt: 2.25 }}>
         <Tabs
@@ -660,6 +769,7 @@ export default function Tours() {
         </Tabs>
         <Divider sx={{ mt: 1.25, opacity: 0.6 }} />
       </Box>
+
       {/* ======================= TAB 0: LIST ======================= */}
       {tab === 0 && (
         <>
@@ -717,6 +827,7 @@ export default function Tours() {
                   }}
                 />
               </Box>
+
               <Box>
                 <Typography
                   sx={{ fontWeight: 900, color: "#0f172a", mb: 0.8 }}
@@ -738,6 +849,7 @@ export default function Tours() {
                   </Select>
                 </FormControl>
               </Box>
+
               <Box
                 sx={{
                   display: "flex",
@@ -765,6 +877,7 @@ export default function Tours() {
               </Box>
             </Box>
           </Paper>
+
           {/* Cards grid */}
           <Box
             sx={{
@@ -783,20 +896,29 @@ export default function Tours() {
                 Loading tours…
               </Typography>
             )}
+
             {!loadingTours && filteredTours.length === 0 && (
               <Typography sx={{ color: "#64748b" }}>
-                No tours found. Create your first tour in the
-                &nbsp;
+                No tours found. Create your first tour in the{" "}
                 <strong>Create Tour</strong> tab.
               </Typography>
             )}
+
             {filteredTours.map((t) => {
               const image =
                 t.featureImageUrl ||
                 (Array.isArray(t.imageUrls) && t.imageUrls[0]) ||
                 "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1200&auto=format&fit=crop";
+
               const status = t.status || "draft";
               const isPublished = status === "published";
+
+              const isFeatured =
+                t.isFeatured === true ||
+                t.isFeatured === "true" ||
+                t.isFeatured === 1 ||
+                t.isFeatured === "1";
+
               return (
                 <Paper
                   key={t.id}
@@ -821,6 +943,7 @@ export default function Tours() {
                         objectFit: "cover",
                       }}
                     />
+
                     <Chip
                       label={status}
                       size="small"
@@ -837,6 +960,7 @@ export default function Tours() {
                         color: isPublished ? "#15803d" : "#475569",
                       }}
                     />
+
                     <Box
                       sx={{
                         position: "absolute",
@@ -862,6 +986,7 @@ export default function Tours() {
                           sx={{ color: "#2563eb" }}
                         />
                       </IconButton>
+
                       <IconButton
                         size="small"
                         onClick={() => handleViewTour(t)}
@@ -878,6 +1003,7 @@ export default function Tours() {
                           sx={{ color: "#16a34a" }}
                         />
                       </IconButton>
+
                       <IconButton
                         size="small"
                         onClick={() => handleDeleteTour(t.id)}
@@ -896,6 +1022,7 @@ export default function Tours() {
                       </IconButton>
                     </Box>
                   </Box>
+
                   {/* Body */}
                   <Box sx={{ p: 2.2 }}>
                     <Typography
@@ -907,6 +1034,7 @@ export default function Tours() {
                     >
                       {t.title}
                     </Typography>
+
                     <Box
                       sx={{
                         mt: 1.4,
@@ -938,6 +1066,7 @@ export default function Tours() {
                           {t.location}
                         </Typography>
                       </Box>
+
                       <Box
                         sx={{
                           display: "flex",
@@ -962,6 +1091,7 @@ export default function Tours() {
                         </Typography>
                       </Box>
                     </Box>
+
                     <Box
                       sx={{
                         mt: 2,
@@ -980,27 +1110,55 @@ export default function Tours() {
                           t.categoryId ||
                           "Uncategorized"}
                       </Typography>
-                      <Button
-                        variant="text"
-                        onClick={() => handleToggleStatus(t)}
+
+                      <Box
                         sx={{
-                          fontWeight: 900,
-                          textTransform: "none",
-                          color: (t.status || "draft") === "published"
-                            ? "#f97316"
-                            : "#16a34a",
-                          "&:hover": {
-                            background:
-                              (t.status || "draft") === "published"
-                                ? "rgba(249,115,22,0.08)"
-                                : "rgba(34,197,94,0.08)",
-                          },
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 1,
                         }}
                       >
-                        {(t.status || "draft") === "published"
-                          ? "Unpublish"
-                          : "Publish"}
-                      </Button>
+                        <Button
+                          variant="text"
+                          onClick={() => handleToggleFeatured(t)}
+                          sx={{
+                            fontWeight: 900,
+                            textTransform: "none",
+                            fontSize: 13,
+                            color: isFeatured ? "#eab308" : "#64748b",
+                            "&:hover": {
+                              background: isFeatured
+                                ? "rgba(234,179,8,0.14)"
+                                : "rgba(148,163,184,0.18)",
+                            },
+                          }}
+                        >
+                          {isFeatured ? "Featured" : "Make Featured"}
+                        </Button>
+
+                        <Button
+                          variant="text"
+                          onClick={() => handleToggleStatus(t)}
+                          sx={{
+                            fontWeight: 900,
+                            textTransform: "none",
+                            color:
+                              (t.status || "draft") === "published"
+                                ? "#f97316"
+                                : "#16a34a",
+                            "&:hover": {
+                              background:
+                                (t.status || "draft") === "published"
+                                  ? "rgba(249,115,22,0.08)"
+                                  : "rgba(34,197,94,0.08)",
+                            },
+                          }}
+                        >
+                          {(t.status || "draft") === "published"
+                            ? "Unpublish"
+                            : "Publish"}
+                        </Button>
+                      </Box>
                     </Box>
                   </Box>
                 </Paper>
@@ -1009,6 +1167,7 @@ export default function Tours() {
           </Box>
         </>
       )}
+
       {/* ======================= TAB 1: CREATE / EDIT TOUR ======================= */}
       {tab === 1 && (
         <Box
@@ -1040,6 +1199,7 @@ export default function Tours() {
                 >
                   Basic Information
                 </Typography>
+
                 <Grid container spacing={2.25}>
                   <Grid item xs={12} md={12 / 5}>
                     <Typography
@@ -1078,6 +1238,7 @@ export default function Tours() {
                       </Typography>
                     )}
                   </Grid>
+
                   <Grid item xs={12} md={12 / 5}>
                     <Typography
                       sx={{
@@ -1100,6 +1261,7 @@ export default function Tours() {
                       }
                     />
                   </Grid>
+
                   <Grid item xs={12} md={12 / 5}>
                     <Typography
                       sx={{
@@ -1120,6 +1282,7 @@ export default function Tours() {
                       }
                     />
                   </Grid>
+
                   <Grid item xs={12} md={12 / 5}>
                     <Typography
                       sx={{
@@ -1139,6 +1302,7 @@ export default function Tours() {
                       }
                     />
                   </Grid>
+
                   <Grid item xs={12} md={12 / 5}>
                     <Typography
                       sx={{
@@ -1159,6 +1323,7 @@ export default function Tours() {
                       }
                     />
                   </Grid>
+
                   <Grid item xs={12} md={3}>
                     <Typography
                       sx={{
@@ -1185,6 +1350,7 @@ export default function Tours() {
                       </Select>
                     </FormControl>
                   </Grid>
+
                   <Grid item xs={12} md={3}>
                     <Typography
                       sx={{
@@ -1204,6 +1370,7 @@ export default function Tours() {
                       }
                     />
                   </Grid>
+
                   <Grid item xs={12} md={3}>
                     <Typography
                       sx={{
@@ -1224,6 +1391,7 @@ export default function Tours() {
                       }
                     />
                   </Grid>
+
                   <Grid item xs={12} md={3}>
                     <Typography
                       sx={{
@@ -1247,6 +1415,7 @@ export default function Tours() {
                   </Grid>
                 </Grid>
               </Paper>
+
               {/* Images */}
               <Paper
                 elevation={0}
@@ -1268,6 +1437,7 @@ export default function Tours() {
                 >
                   Images
                 </Typography>
+
                 <Grid container spacing={2.25}>
                   <Grid item xs={12} md={6}>
                     <Typography
@@ -1310,6 +1480,7 @@ export default function Tours() {
                         ),
                       }}
                     />
+
                     <Box sx={{ mt: 1.5 }}>
                       <Box
                         sx={{
@@ -1342,6 +1513,7 @@ export default function Tours() {
                             onChange={handleFeatureFileSelect}
                           />
                         </Button>
+
                         <Button
                           size="small"
                           onClick={handleUploadFeatureImage}
@@ -1358,6 +1530,7 @@ export default function Tours() {
                             ? "Uploading..."
                             : "Upload"}
                         </Button>
+
                         {form.featureImageUrl && (
                           <Button
                             size="small"
@@ -1375,6 +1548,7 @@ export default function Tours() {
                           </Button>
                         )}
                       </Box>
+
                       {featureFileName && (
                         <Typography
                           variant="caption"
@@ -1389,6 +1563,7 @@ export default function Tours() {
                       )}
                     </Box>
                   </Grid>
+
                   <Grid item xs={12} md={6}>
                     <Typography
                       sx={{
@@ -1399,6 +1574,7 @@ export default function Tours() {
                     >
                       Gallery Images
                     </Typography>
+
                     {form.galleryImages.map((url, idx) => (
                       <Box key={idx} sx={{ mt: idx > 0 ? 3 : 0 }}>
                         <TextField
@@ -1431,6 +1607,7 @@ export default function Tours() {
                             ),
                           }}
                         />
+
                         <Box sx={{ mt: 1.5 }}>
                           <Box
                             sx={{
@@ -1465,6 +1642,7 @@ export default function Tours() {
                                 }
                               />
                             </Button>
+
                             <Button
                               size="small"
                               onClick={() =>
@@ -1486,6 +1664,7 @@ export default function Tours() {
                                 ? "Uploading..."
                                 : "Upload"}
                             </Button>
+
                             {url && (
                               <Button
                                 size="small"
@@ -1505,6 +1684,7 @@ export default function Tours() {
                               </Button>
                             )}
                           </Box>
+
                           {galleryFileNames[idx] && (
                             <Typography
                               variant="caption"
@@ -1520,6 +1700,7 @@ export default function Tours() {
                         </Box>
                       </Box>
                     ))}
+
                     <Button
                       type="button"
                       onClick={() => addArrayItem("galleryImages", "")}
@@ -1534,6 +1715,7 @@ export default function Tours() {
                   </Grid>
                 </Grid>
               </Paper>
+
               {/* Tour Highlights */}
               <Paper
                 elevation={0}
@@ -1555,6 +1737,7 @@ export default function Tours() {
                 >
                   Tour Highlights
                 </Typography>
+
                 {form.highlights.map((h, idx) => (
                   <Box key={idx} sx={{ mb: 1.75 }}>
                     {idx === 0 && (
@@ -1568,6 +1751,7 @@ export default function Tours() {
                         Highlight
                       </Typography>
                     )}
+
                     <TextField
                       fullWidth
                       placeholder="Enter tour highlight"
@@ -1582,6 +1766,7 @@ export default function Tours() {
                     />
                   </Box>
                 ))}
+
                 <Button
                   type="button"
                   onClick={() => addArrayItem("highlights", "")}
@@ -1593,6 +1778,7 @@ export default function Tours() {
                   + Add Highlight
                 </Button>
               </Paper>
+
               {/* Itinerary */}
               <Paper
                 elevation={0}
@@ -1614,6 +1800,7 @@ export default function Tours() {
                 >
                   Itinerary
                 </Typography>
+
                 {form.itinerary.map((day, idx) => (
                   <Box
                     key={idx}
@@ -1634,6 +1821,7 @@ export default function Tours() {
                     >
                       Day {idx + 1}
                     </Typography>
+
                     <Box sx={{ mb: 1.5 }}>
                       <Typography
                         sx={{
@@ -1657,6 +1845,7 @@ export default function Tours() {
                         }
                       />
                     </Box>
+
                     <Box>
                       <Typography
                         sx={{
@@ -1684,6 +1873,7 @@ export default function Tours() {
                     </Box>
                   </Box>
                 ))}
+
                 <Button
                   type="button"
                   onClick={addItineraryDay}
@@ -1696,8 +1886,18 @@ export default function Tours() {
                 </Button>
               </Paper>
             </Grid>
+
             {/* RIGHT: publish / SEO / included / excluded */}
-            <Grid item xs={12} md={4} sx={{ position: { md: 'sticky' }, top: { md: 20 }, alignSelf: 'start' }}>
+            <Grid
+              item
+              xs={12}
+              md={4}
+              sx={{
+                position: { md: "sticky" },
+                top: { md: 20 },
+                alignSelf: "start",
+              }}
+            >
               {/* Publish settings */}
               <Paper
                 elevation={0}
@@ -1719,6 +1919,7 @@ export default function Tours() {
                 >
                   Publish Settings
                 </Typography>
+
                 <Box sx={{ mb: 2 }}>
                   <Typography
                     sx={{
@@ -1741,6 +1942,7 @@ export default function Tours() {
                     </Select>
                   </FormControl>
                 </Box>
+
                 <Box sx={{ mb: 0 }}>
                   <Typography
                     sx={{
@@ -1777,6 +1979,7 @@ export default function Tours() {
                   />
                 </Box>
               </Paper>
+
               {/* SEO Settings */}
               <Paper
                 elevation={0}
@@ -1798,6 +2001,7 @@ export default function Tours() {
                 >
                   SEO Settings
                 </Typography>
+
                 <Box sx={{ mb: 2 }}>
                   <Typography
                     sx={{
@@ -1817,6 +2021,7 @@ export default function Tours() {
                     }
                   />
                 </Box>
+
                 <Box sx={{ mb: 2 }}>
                   <Typography
                     sx={{
@@ -1841,6 +2046,7 @@ export default function Tours() {
                     }
                   />
                 </Box>
+
                 <Box>
                   <Typography
                     sx={{
@@ -1861,7 +2067,8 @@ export default function Tours() {
                   />
                 </Box>
               </Paper>
-              {/* Included */}
+
+              {/* What's Included */}
               <Paper
                 elevation={0}
                 sx={{
@@ -1882,6 +2089,7 @@ export default function Tours() {
                 >
                   What's Included
                 </Typography>
+
                 {form.included.map((item, idx) => (
                   <Box key={idx} sx={{ mb: 1.75 }}>
                     {idx === 0 && (
@@ -1895,6 +2103,7 @@ export default function Tours() {
                         Item
                       </Typography>
                     )}
+
                     <TextField
                       fullWidth
                       placeholder="e.g., Accommodation"
@@ -1909,6 +2118,7 @@ export default function Tours() {
                     />
                   </Box>
                 ))}
+
                 <Button
                   type="button"
                   onClick={() => addArrayItem("included", "")}
@@ -1920,7 +2130,8 @@ export default function Tours() {
                   + Add Item
                 </Button>
               </Paper>
-              {/* Excluded */}
+
+              {/* What's Excluded */}
               <Paper
                 elevation={0}
                 sx={{
@@ -1941,6 +2152,7 @@ export default function Tours() {
                 >
                   What's Excluded
                 </Typography>
+
                 {form.excluded.map((item, idx) => (
                   <Box key={idx} sx={{ mb: 1.75 }}>
                     {idx === 0 && (
@@ -1954,6 +2166,7 @@ export default function Tours() {
                         Item
                       </Typography>
                     )}
+
                     <TextField
                       fullWidth
                       placeholder="e.g., International flights"
@@ -1968,6 +2181,7 @@ export default function Tours() {
                     />
                   </Box>
                 ))}
+
                 <Button
                   type="button"
                   onClick={() => addArrayItem("excluded", "")}
@@ -1979,6 +2193,7 @@ export default function Tours() {
                   + Add Item
                 </Button>
               </Paper>
+
               {/* Save / Cancel */}
               <Box sx={{ mt: 1 }}>
                 <Button
@@ -2004,6 +2219,7 @@ export default function Tours() {
                     ? "Update Tour"
                     : "Save Tour"}
                 </Button>
+
                 <Button
                   type="button"
                   fullWidth

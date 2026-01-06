@@ -29,7 +29,7 @@ function slugifyTitle(rawTitle) {
   const title = (rawTitle || "").trim();
   const base = title || "tour";
 
-  let slug = base
+  let slug = title
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-") // non-alphanumerics -> "-"
     .replace(/^-+|-+$/g, ""); // trim "-" from start/end
@@ -170,6 +170,9 @@ function mapFormToTourDoc(form) {
     // Map embed (iframe or URL string)
     mapEmbedHtml: (form.mapEmbedHtml || "").trim(),
 
+    // Featured flag (for homepage)
+    isFeatured: !!form.isFeatured,
+
     // ---------- SEO meta ----------
     // metaTitle: if admin filled, use that; otherwise fall back to title
     metaTitle: (form.metaTitle || form.title || "").trim(),
@@ -260,6 +263,15 @@ export async function setTourStatus(id, status) {
   const refDoc = doc(db, TOURS_COLLECTION, id);
   await updateDoc(refDoc, {
     status,
+    updatedAt: serverTimestamp(),
+  });
+}
+
+// Mark / unmark a tour as featured
+export async function setTourFeatured(id, isFeatured) {
+  const refDoc = doc(db, TOURS_COLLECTION, id);
+  await updateDoc(refDoc, {
+    isFeatured: !!isFeatured,
     updatedAt: serverTimestamp(),
   });
 }
