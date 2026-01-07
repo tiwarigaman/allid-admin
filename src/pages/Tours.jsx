@@ -169,7 +169,8 @@ export default function Tours() {
   const [galleryFileNames, setGalleryFileNames] = useState({}); // { index: string }
 
   // track uploaded images for *new* tours so we can delete on Cancel
-  const [uploadedImagesToCleanup, setUploadedImagesToCleanup] = useState([]);
+  const [uploadedImagesToCleanup, setUploadedImagesToCleanup] =
+    useState([]);
 
   // ------------- Load tours from API layer -------------
   const loadTours = useCallback(async () => {
@@ -210,15 +211,21 @@ export default function Tours() {
     const q = queryText.trim().toLowerCase();
     return tours.filter((t) => {
       const matchesQ =
-        !q || `${t.title || ""} ${t.location || ""}`.toLowerCase().includes(q);
+        !q ||
+        `${t.title || ""} ${t.location || ""}`
+          .toLowerCase()
+          .includes(q);
       const matchesStatus =
-        statusFilter === "all" ? true : (t.status || "draft") === statusFilter;
+        statusFilter === "all"
+          ? true
+          : (t.status || "draft") === statusFilter;
       return matchesQ && matchesStatus;
     });
   }, [tours, queryText, statusFilter]);
 
   // ------------- Form helpers -------------
-  const updateField = (field, value) => setForm((p) => ({ ...p, [field]: value }));
+  const updateField = (field, value) =>
+    setForm((p) => ({ ...p, [field]: value }));
 
   const updateArrayItem = (field, index, value) => {
     setForm((prev) => {
@@ -230,6 +237,15 @@ export default function Tours() {
 
   const addArrayItem = (field, emptyValue) => {
     setForm((prev) => ({ ...prev, [field]: [...prev[field], emptyValue] }));
+  };
+
+  const removeArrayItem = (field, index) => {
+    setForm((prev) => {
+      const arr = [...prev[field]];
+      if (arr.length <= 1 || index === 0) return prev;
+      arr.splice(index, 1);
+      return { ...prev, [field]: arr };
+    });
   };
 
   const updateItineraryItem = (index, itemField, value) => {
@@ -245,6 +261,15 @@ export default function Tours() {
       ...prev,
       itinerary: [...prev.itinerary, { dayTitle: "", description: "" }],
     }));
+  };
+
+  const removeItineraryDay = (index) => {
+    setForm((prev) => {
+      if (prev.itinerary.length <= 1 || index === 0) return prev;
+      const arr = [...prev.itinerary];
+      arr.splice(index, 1);
+      return { ...prev, itinerary: arr };
+    });
   };
 
   const resetForm = () => {
@@ -305,11 +330,14 @@ export default function Tours() {
   };
 
   const handleUploadFeatureImage = async () => {
-    if (!featureFile) return window.alert("Please select an image first.");
+    if (!featureFile)
+      return window.alert("Please select an image first.");
 
     const maxSizeBytes = 3 * 1024 * 1024;
     if (featureFile.size > maxSizeBytes)
-      return window.alert("Please upload an image smaller than 3MB.");
+      return window.alert(
+        "Please upload an image smaller than 3MB."
+      );
 
     setUploadingFeature(true);
     try {
@@ -341,11 +369,14 @@ export default function Tours() {
 
   const handleUploadGalleryImage = async (index) => {
     const file = galleryFiles[index];
-    if (!file) return window.alert("Please select an image first.");
+    if (!file)
+      return window.alert("Please select an image first.");
 
     const maxSizeBytes = 3 * 1024 * 1024;
     if (file.size > maxSizeBytes)
-      return window.alert("Please upload an image smaller than 3MB.");
+      return window.alert(
+        "Please upload an image smaller than 3MB."
+      );
 
     setUploadingGallery((prev) => ({ ...prev, [index]: true }));
     try {
@@ -376,12 +407,55 @@ export default function Tours() {
     }
   };
 
+  const removeGalleryRow = (index) => {
+    if (index === 0) return;
+
+    const removedUrl = form.galleryImages[index];
+
+    // remove row from form array
+    setForm((prev) => {
+      if (prev.galleryImages.length <= 1) return prev;
+      const arr = [...prev.galleryImages];
+      arr.splice(index, 1);
+      return { ...prev, galleryImages: arr };
+    });
+
+    if (removedUrl) {
+      setUploadedImagesToCleanup((prev) =>
+        prev.filter((u) => u !== removedUrl)
+      );
+    }
+
+    // reindex file maps
+    setGalleryFiles((prev) => {
+      const next = {};
+      Object.entries(prev).forEach(([k, v]) => {
+        const i = Number(k);
+        if (i < index) next[i] = v;
+        else if (i > index) next[i - 1] = v;
+      });
+      return next;
+    });
+
+    setGalleryFileNames((prev) => {
+      const next = {};
+      Object.entries(prev).forEach(([k, v]) => {
+        const i = Number(k);
+        if (i < index) next[i] = v;
+        else if (i > index) next[i - 1] = v;
+      });
+      return next;
+    });
+  };
+
   // ------------- Delete individual images -------------
   const handleDeleteFeatureImage = async () => {
     const url = form.featureImageUrl;
     if (!url) return;
 
-    const ok = window.confirm("Delete this feature image from storage and clear it?");
+    const ok = window.confirm(
+      "Delete this feature image from storage and clear it?"
+    );
     if (!ok) return;
 
     try {
@@ -390,7 +464,9 @@ export default function Tours() {
       console.error("Error deleting feature image:", err);
     } finally {
       updateField("featureImageUrl", "");
-      setUploadedImagesToCleanup((prev) => prev.filter((u) => u !== url));
+      setUploadedImagesToCleanup((prev) =>
+        prev.filter((u) => u !== url)
+      );
       setFeatureFile(null);
       setFeatureFileName("");
     }
@@ -400,7 +476,9 @@ export default function Tours() {
     const url = form.galleryImages[index];
     if (!url) return;
 
-    const ok = window.confirm("Delete this gallery image from storage and clear it?");
+    const ok = window.confirm(
+      "Delete this gallery image from storage and clear it?"
+    );
     if (!ok) return;
 
     try {
@@ -413,7 +491,9 @@ export default function Tours() {
         arr[index] = "";
         return { ...prev, galleryImages: arr };
       });
-      setUploadedImagesToCleanup((prev) => prev.filter((u) => u !== url));
+      setUploadedImagesToCleanup((prev) =>
+        prev.filter((u) => u !== url)
+      );
       setGalleryFiles((prev) => {
         const copy = { ...prev };
         delete copy[index];
@@ -459,7 +539,9 @@ export default function Tours() {
 
   // ------------- Delete tour via API -------------
   const handleDeleteTour = async (id) => {
-    const ok = window.confirm("Are you sure you want to delete this tour?");
+    const ok = window.confirm(
+      "Are you sure you want to delete this tour?"
+    );
     if (!ok) return;
 
     try {
@@ -484,8 +566,11 @@ export default function Tours() {
 
   // ------------- View tour (placeholder for user panel) -------------
   const handleViewTour = (tour) => {
-    const slug = tour.slug || slugPreviewFromTitle(tour.title) || "(slug-missing)";
-    window.alert(`TODO: Open public tour detail page at "/tours/${slug}" for "${tour.title}".`);
+    const slug =
+      tour.slug || slugPreviewFromTitle(tour.title) || "(slug-missing)";
+    window.alert(
+      `TODO: Open public tour detail page at "/tours/${slug}" for "${tour.title}".`
+    );
   };
 
   // ------------- Publish / unpublish (status toggle) -------------
@@ -495,7 +580,11 @@ export default function Tours() {
 
     try {
       await setTourStatus(tour.id, next);
-      setTours((prev) => prev.map((t) => (t.id === tour.id ? { ...t, status: next } : t)));
+      setTours((prev) =>
+        prev.map((t) =>
+          t.id === tour.id ? { ...t, status: next } : t
+        )
+      );
     } catch (err) {
       console.error("Error updating status:", err);
     }
@@ -520,7 +609,9 @@ export default function Tours() {
       }).length;
 
       if (featuredCount >= 6) {
-        window.alert("You can only mark up to 6 tours as Featured. Unfeature another tour first.");
+        window.alert(
+          "You can only mark up to 6 tours as Featured. Unfeature another tour first."
+        );
         return;
       }
     }
@@ -529,17 +620,25 @@ export default function Tours() {
 
     try {
       await setTourFeatured(tour.id, nextFlag);
-      setTours((prev) => prev.map((t) => (t.id === tour.id ? { ...t, isFeatured: nextFlag } : t)));
+      setTours((prev) =>
+        prev.map((t) =>
+          t.id === tour.id ? { ...t, isFeatured: nextFlag } : t
+        )
+      );
     } catch (err) {
       console.error("Error updating featured flag:", err);
-      window.alert("Failed to update featured status. Please try again.");
+      window.alert(
+        "Failed to update featured status. Please try again."
+      );
     }
   };
 
   // ------------- Cancel (new vs edit) -------------
   const handleCancel = async () => {
     if (editingId) {
-      const ok = window.confirm("Discard changes to this tour and go back?");
+      const ok = window.confirm(
+        "Discard changes to this tour and go back?"
+      );
       if (!ok) return;
 
       resetForm();
@@ -558,7 +657,9 @@ export default function Tours() {
     if (!ok) return;
 
     if (hasUploads) {
-      const uniqueUrls = Array.from(new Set(uploadedImagesToCleanup));
+      const uniqueUrls = Array.from(
+        new Set(uploadedImagesToCleanup)
+      );
       for (const url of uniqueUrls) {
         try {
           await deleteTourImageByUrl(url);
@@ -592,7 +693,9 @@ export default function Tours() {
           >
             Tour Management
           </Typography>
-          <Typography sx={{ mt: 0.6, color: "#64748b", fontWeight: 600 }}>
+          <Typography
+            sx={{ mt: 0.6, color: "#64748b", fontWeight: 600 }}
+          >
             Manage your travel tours and packages
           </Typography>
         </>
@@ -618,14 +721,18 @@ export default function Tours() {
               >
                 {editingId ? "Edit Tour" : "Add New Tour"}
               </Typography>
-              <Typography sx={{ mt: 0.6, color: "#64748b", fontWeight: 600 }}>
+              <Typography
+                sx={{ mt: 0.6, color: "#64748b", fontWeight: 600 }}
+              >
                 {editingId
                   ? "Update your tour package details"
                   : "Create a new tour package for your customers"}
               </Typography>
             </Box>
             <Button
-              startIcon={<ArrowBackIosNewRoundedIcon sx={{ fontSize: 16 }} />}
+              startIcon={
+                <ArrowBackIosNewRoundedIcon sx={{ fontSize: 16 }} />
+              }
               onClick={() => {
                 setTab(0);
                 setEditingId(null);
@@ -716,7 +823,9 @@ export default function Tours() {
               }}
             >
               <Box>
-                <Typography sx={{ fontWeight: 700, color: "#0f172a", mb: 0.8 }}>
+                <Typography
+                  sx={{ fontWeight: 700, color: "#0f172a", mb: 0.8 }}
+                >
                   Search Tours
                 </Typography>
                 <TextField
@@ -741,7 +850,9 @@ export default function Tours() {
               </Box>
 
               <Box>
-                <Typography sx={{ fontWeight: 700, color: "#0f172a", mb: 0.8 }}>
+                <Typography
+                  sx={{ fontWeight: 700, color: "#0f172a", mb: 0.8 }}
+                >
                   Status
                 </Typography>
                 <FormControl fullWidth>
@@ -760,7 +871,12 @@ export default function Tours() {
                 </FormControl>
               </Box>
 
-              <Box sx={{ display: "flex", justifyContent: { xs: "flex-start", md: "flex-end" } }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: { xs: "flex-start", md: "flex-end" },
+                }}
+              >
                 <Button
                   disabled={!queryText && statusFilter === "all"}
                   onClick={() => {
@@ -796,11 +912,16 @@ export default function Tours() {
               gap: 3,
             }}
           >
-            {loadingTours && <Typography sx={{ color: "#64748b" }}>Loading tours…</Typography>}
+            {loadingTours && (
+              <Typography sx={{ color: "#64748b" }}>
+                Loading tours…
+              </Typography>
+            )}
 
             {!loadingTours && filteredTours.length === 0 && (
               <Typography sx={{ color: "#64748b" }}>
-                No tours found. Create your first tour in the <strong>Create Tour</strong> tab.
+                No tours found. Create your first tour in the{" "}
+                <strong>Create Tour</strong> tab.
               </Typography>
             )}
 
@@ -837,7 +958,11 @@ export default function Tours() {
                       component="img"
                       src={image}
                       alt={t.title}
-                      sx={{ width: "100%", height: 210, objectFit: "cover" }}
+                      sx={{
+                        width: "100%",
+                        height: 210,
+                        objectFit: "cover",
+                      }}
                     />
 
                     <Chip
@@ -857,7 +982,15 @@ export default function Tours() {
                       }}
                     />
 
-                    <Box sx={{ position: "absolute", top: 12, right: 12, display: "flex", gap: 1 }}>
+                    <Box
+                      sx={{
+                        position: "absolute",
+                        top: 12,
+                        right: 12,
+                        display: "flex",
+                        gap: 1,
+                      }}
+                    >
                       <IconButton
                         size="small"
                         onClick={() => handleEditTour(t)}
@@ -869,7 +1002,10 @@ export default function Tours() {
                           "&:hover": { background: "#fff" },
                         }}
                       >
-                        <EditRoundedIcon fontSize="small" sx={{ color: "#2563eb" }} />
+                        <EditRoundedIcon
+                          fontSize="small"
+                          sx={{ color: "#2563eb" }}
+                        />
                       </IconButton>
 
                       <IconButton
@@ -883,7 +1019,10 @@ export default function Tours() {
                           "&:hover": { background: "#fff" },
                         }}
                       >
-                        <VisibilityRoundedIcon fontSize="small" sx={{ color: "#16a34a" }} />
+                        <VisibilityRoundedIcon
+                          fontSize="small"
+                          sx={{ color: "#16a34a" }}
+                        />
                       </IconButton>
 
                       <IconButton
@@ -897,35 +1036,98 @@ export default function Tours() {
                           "&:hover": { background: "#fff" },
                         }}
                       >
-                        <DeleteOutlineRoundedIcon fontSize="small" sx={{ color: "#ef4444" }} />
+                        <DeleteOutlineRoundedIcon
+                          fontSize="small"
+                          sx={{ color: "#ef4444" }}
+                        />
                       </IconButton>
                     </Box>
                   </Box>
 
                   {/* Body */}
                   <Box sx={{ p: 2.2 }}>
-                    <Typography sx={{ fontSize: 18, fontWeight: 700, color: "#0f172a" }}>
+                    <Typography
+                      sx={{
+                        fontSize: 18,
+                        fontWeight: 700,
+                        color: "#0f172a",
+                      }}
+                    >
                       {t.title}
                     </Typography>
 
-                    <Box sx={{ mt: 1.4, display: "flex", flexDirection: "column", gap: 1 }}>
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 1, color: "#475569" }}>
-                        <LocationOnOutlinedIcon sx={{ fontSize: 18, color: "#64748b" }} />
-                        <Typography sx={{ fontWeight: 500, color: "#64748b" }}>{t.location}</Typography>
+                    <Box
+                      sx={{
+                        mt: 1.4,
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 1,
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 1,
+                          color: "#475569",
+                        }}
+                      >
+                        <LocationOnOutlinedIcon
+                          sx={{ fontSize: 18, color: "#64748b" }}
+                        />
+                        <Typography
+                          sx={{
+                            fontWeight: 500,
+                            color: "#64748b",
+                          }}
+                        >
+                          {t.location}
+                        </Typography>
                       </Box>
 
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 1, color: "#475569" }}>
-                        <ScheduleOutlinedIcon sx={{ fontSize: 18, color: "#64748b" }} />
-                        <Typography sx={{ fontWeight: 500, color: "#64748b" }}>{t.duration}</Typography>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 1,
+                          color: "#475569",
+                        }}
+                      >
+                        <ScheduleOutlinedIcon
+                          sx={{ fontSize: 18, color: "#64748b" }}
+                        />
+                        <Typography
+                          sx={{
+                            fontWeight: 500,
+                            color: "#64748b",
+                          }}
+                        >
+                          {t.duration}
+                        </Typography>
                       </Box>
                     </Box>
 
-                    <Box sx={{ mt: 2, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                      <Typography sx={{ fontWeight: 500, color: "#64748b" }}>
+                    <Box
+                      sx={{
+                        mt: 2,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                      }}
+                    >
+                      <Typography
+                        sx={{ fontWeight: 500, color: "#64748b" }}
+                      >
                         {t.categoryName || t.categoryId || "Uncategorized"}
                       </Typography>
 
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 1,
+                        }}
+                      >
                         <Button
                           variant="text"
                           onClick={() => handleToggleFeatured(t)}
@@ -935,7 +1137,9 @@ export default function Tours() {
                             fontSize: 13,
                             color: isFeatured ? "#eab308" : "#64748b",
                             "&:hover": {
-                              background: isFeatured ? "rgba(234,179,8,0.14)" : "rgba(148,163,184,0.18)",
+                              background: isFeatured
+                                ? "rgba(234,179,8,0.14)"
+                                : "rgba(148,163,184,0.18)",
                             },
                           }}
                         >
@@ -948,7 +1152,10 @@ export default function Tours() {
                           sx={{
                             fontWeight: 700,
                             textTransform: "none",
-                            color: (t.status || "draft") === "published" ? "#f97316" : "#16a34a",
+                            color:
+                              (t.status || "draft") === "published"
+                                ? "#f97316"
+                                : "#16a34a",
                             "&:hover": {
                               background:
                                 (t.status || "draft") === "published"
@@ -957,7 +1164,9 @@ export default function Tours() {
                             },
                           }}
                         >
-                          {(t.status || "draft") === "published" ? "Unpublish" : "Publish"}
+                          {(t.status || "draft") === "published"
+                            ? "Unpublish"
+                            : "Publish"}
                         </Button>
                       </Box>
                     </Box>
@@ -977,11 +1186,11 @@ export default function Tours() {
             spacing={3}
             alignItems="flex-start"
             sx={{
-              flexWrap: { xs: "wrap", md: "nowrap" }, // ✅ fixed: no squeeze on mobile
+              flexWrap: { xs: "wrap", md: "nowrap" },
               minWidth: 0,
             }}
           >
-            {/* LEFT: main fields (takes remaining width) */}
+            {/* LEFT: main fields */}
             <Grid
               item
               xs={12}
@@ -1003,13 +1212,22 @@ export default function Tours() {
                   backgroundColor: "#fff",
                 }}
               >
-                <Typography sx={{ fontWeight: 700, fontSize: 18, mb: 2 }}>
+                <Typography
+                  sx={{ fontWeight: 700, fontSize: 18, mb: 2 }}
+                >
                   Basic Information
                 </Typography>
 
-                <Grid container spacing={2.25}>
-                  <Grid item xs={12} md={12 / 5}>
-                    <Typography sx={{ fontWeight: 500, mb: 0.6, color: "#0f172a" }}>
+                {/* <Grid container spacing={2.25}> */}
+                  {/* Title - full row */}
+                  <Grid item xs={12}>
+                    <Typography
+                      sx={{
+                        fontWeight: 500,
+                        mb: 0.6,
+                        color: "#0f172a",
+                      }}
+                    >
                       Tour Title
                     </Typography>
                     <TextField
@@ -1017,7 +1235,9 @@ export default function Tours() {
                       required
                       placeholder="Enter tour title"
                       value={form.title}
-                      onChange={(e) => updateField("title", e.target.value)}
+                      onChange={(e) =>
+                        updateField("title", e.target.value)
+                      }
                     />
                     {form.title && (
                       <Typography
@@ -1038,23 +1258,45 @@ export default function Tours() {
                     )}
                   </Grid>
 
-                  <Grid item xs={12} md={12 / 5}>
-                    <Typography sx={{ fontWeight: 500, mb: 0.6, color: "#0f172a" }}>
+                  {/* Description - full row */}
+                  <Grid item xs={12}>
+                    <Typography
+                      sx={{
+                        fontWeight: 500,
+                        mb: 0.6,
+                        color: "#0f172a",
+                        paddingTop: 2,
+                      }}
+                    >
                       Description
                     </Typography>
                     <TextField
                       fullWidth
                       required
                       multiline
-                      minRows={1}
+                      minRows={2}
                       placeholder="Enter tour description"
                       value={form.description}
-                      onChange={(e) => updateField("description", e.target.value)}
+                      onChange={(e) =>
+                        updateField(
+                          "description",
+                          e.target.value
+                        )
+                      }
                     />
                   </Grid>
 
-                  <Grid item xs={12} md={12 / 5}>
-                    <Typography sx={{ fontWeight: 500, mb: 0.6, color: "#0f172a" }}>
+                 
+                  {/* Location | Duration */}
+                  <Grid item xs={12} md={6}>
+                    <Typography
+                      sx={{
+                        fontWeight: 500,
+                        mb: 0.6,
+                        color: "#0f172a",
+                        paddingTop: 2,
+                      }}
+                    >
                       Location
                     </Typography>
                     <TextField
@@ -1062,24 +1304,43 @@ export default function Tours() {
                       required
                       placeholder="e.g., Delhi, Agra, Jaipur"
                       value={form.location}
-                      onChange={(e) => updateField("location", e.target.value)}
+                      onChange={(e) =>
+                        updateField("location", e.target.value)
+                      }
                     />
                   </Grid>
 
-                  <Grid item xs={12} md={12 / 5}>
-                    <Typography sx={{ fontWeight: 500, mb: 0.6, color: "#0f172a" }}>
+                  <Grid item xs={12} md={6}>
+                    <Typography
+                      sx={{
+                        fontWeight: 500,
+                        mb: 0.6,
+                        color: "#0f172a",
+                        paddingTop: 2,
+                      }}
+                    >
                       Duration
                     </Typography>
                     <TextField
                       fullWidth
                       placeholder="e.g., 6 Days 5 Nights"
                       value={form.duration}
-                      onChange={(e) => updateField("duration", e.target.value)}
+                      onChange={(e) =>
+                        updateField("duration", e.target.value)
+                      }
                     />
                   </Grid>
 
-                  <Grid item xs={12} md={12 / 5}>
-                    <Typography sx={{ fontWeight: 500, mb: 0.6, color: "#0f172a" }}>
+                  {/* Max Group Size | Difficulty Level */}
+                  <Grid item xs={12} md={6}>
+                    <Typography
+                      sx={{
+                        fontWeight: 500,
+                        mb: 0.6,
+                        color: "#0f172a",
+                        paddingTop: 2,
+                      }}
+                    >
                       Max Group Size
                     </Typography>
                     <TextField
@@ -1087,40 +1348,77 @@ export default function Tours() {
                       type="number"
                       placeholder="e.g., 15"
                       value={form.maxGroupSize}
-                      onChange={(e) => updateField("maxGroupSize", e.target.value)}
+                      onChange={(e) =>
+                        updateField(
+                          "maxGroupSize",
+                          e.target.value
+                        )
+                      }
                     />
                   </Grid>
+                 
 
-                  <Grid item xs={12} md={3}>
-                    <Typography sx={{ fontWeight: 500, mb: 0.6, color: "#0f172a" }}>
+                  <Grid item xs={12} md={6}>
+                    <Typography
+                      sx={{
+                        fontWeight: 500,
+                        mb: 0.6,
+                        color: "#0f172a",
+                        paddingTop: 2,
+                      }}
+                    >
                       Difficulty Level
                     </Typography>
                     <FormControl fullWidth>
                       <Select
                         value={form.difficultyLevel}
-                        onChange={(e) => updateField("difficultyLevel", e.target.value)}
+                        onChange={(e) =>
+                          updateField(
+                            "difficultyLevel",
+                            e.target.value
+                          )
+                        }
                       >
                         <MenuItem value="Easy">Easy</MenuItem>
-                        <MenuItem value="Moderate">Moderate</MenuItem>
+                        <MenuItem value="Moderate">
+                          Moderate
+                        </MenuItem>
                         <MenuItem value="Hard">Hard</MenuItem>
                       </Select>
                     </FormControl>
                   </Grid>
 
-                  <Grid item xs={12} md={3}>
-                    <Typography sx={{ fontWeight: 500, mb: 0.6, color: "#0f172a" }}>
+                  {/* Season | Minimum Age */}
+                  <Grid item xs={12} md={6}>
+                    <Typography
+                      sx={{
+                        fontWeight: 500,
+                        mb: 0.6,
+                        color: "#0f172a",
+                        paddingTop: 2,
+                      }}
+                    >
                       Season
                     </Typography>
                     <TextField
                       fullWidth
                       placeholder="e.g., October to February"
                       value={form.season}
-                      onChange={(e) => updateField("season", e.target.value)}
+                      onChange={(e) =>
+                        updateField("season", e.target.value)
+                      }
                     />
                   </Grid>
 
-                  <Grid item xs={12} md={3}>
-                    <Typography sx={{ fontWeight: 500, mb: 0.6, color: "#0f172a" }}>
+                  <Grid item xs={12} md={6}>
+                    <Typography
+                      sx={{
+                        fontWeight: 500,
+                        mb: 0.6,
+                        color: "#0f172a",
+                        paddingTop: 2,
+                      }}
+                    >
                       Minimum Age
                     </Typography>
                     <TextField
@@ -1128,24 +1426,39 @@ export default function Tours() {
                       type="number"
                       placeholder="e.g., 12"
                       value={form.minAge}
-                      onChange={(e) => updateField("minAge", e.target.value)}
+                      onChange={(e) =>
+                        updateField("minAge", e.target.value)
+                      }
                     />
                   </Grid>
 
-                  <Grid item xs={12} md={3}>
-                    <Typography sx={{ fontWeight: 500, mb: 0.6, color: "#0f172a" }}>
+                  {/* Map Embed - full row */}
+                  <Grid item xs={12}>
+                    <Typography
+                      sx={{
+                        fontWeight: 500,
+                        mb: 0.6,
+                        color: "#0f172a",
+                        paddingTop: 2,
+                      }}
+                    >
                       Map Embed (iframe)
                     </Typography>
                     <TextField
                       fullWidth
                       multiline
-                      minRows={1}
+                      minRows={2}
                       placeholder='<iframe src="..."></iframe> or map embed code'
                       value={form.mapEmbedHtml}
-                      onChange={(e) => updateField("mapEmbedHtml", e.target.value)}
+                      onChange={(e) =>
+                        updateField(
+                          "mapEmbedHtml",
+                          e.target.value
+                        )
+                      }
                     />
                   </Grid>
-                </Grid>
+                {/* </Grid> */}
               </Paper>
 
               {/* Images */}
@@ -1160,20 +1473,34 @@ export default function Tours() {
                   backgroundColor: "#fff",
                 }}
               >
-                <Typography sx={{ fontWeight: 700, fontSize: 18, mb: 2 }}>
+                <Typography
+                  sx={{ fontWeight: 700, fontSize: 18, mb: 2 }}
+                >
                   Images
                 </Typography>
 
                 <Grid container spacing={2.25}>
+                  {/* Feature image */}
                   <Grid item xs={12} md={6}>
-                    <Typography sx={{ fontWeight: 500, mb: 0.6, color: "#0f172a" }}>
+                    <Typography
+                      sx={{
+                        fontWeight: 500,
+                        mb: 0.6,
+                        color: "#0f172a",
+                      }}
+                    >
                       Feature Image
                     </Typography>
                     <TextField
                       fullWidth
                       placeholder="https://example.com/image.jpg"
                       value={form.featureImageUrl}
-                      onChange={(e) => updateField("featureImageUrl", e.target.value)}
+                      onChange={(e) =>
+                        updateField(
+                          "featureImageUrl",
+                          e.target.value
+                        )
+                      }
                       disabled={Boolean(form.featureImageUrl)}
                       helperText={
                         form.featureImageUrl
@@ -1183,7 +1510,14 @@ export default function Tours() {
                       InputProps={{
                         endAdornment: form.featureImageUrl && (
                           <InputAdornment position="end">
-                            <IconButton size="small" onClick={() => copyToClipboard(form.featureImageUrl)}>
+                            <IconButton
+                              size="small"
+                              onClick={() =>
+                                copyToClipboard(
+                                  form.featureImageUrl
+                                )
+                              }
+                            >
                               <ContentCopyIcon fontSize="small" />
                             </IconButton>
                           </InputAdornment>
@@ -1192,7 +1526,14 @@ export default function Tours() {
                     />
 
                     <Box sx={{ mt: 1.5 }}>
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 1.5,
+                          flexWrap: "wrap",
+                        }}
+                      >
                         <Button
                           component="label"
                           size="small"
@@ -1203,28 +1544,53 @@ export default function Tours() {
                             px: 2,
                             py: 0.6,
                             background: "rgba(15,23,42,0.04)",
-                            "&:hover": { background: "rgba(15,23,42,0.08)" },
+                            "&:hover": {
+                              background: "rgba(15,23,42,0.08)",
+                            },
                           }}
                         >
                           Select
-                          <input hidden type="file" accept="image/*" onChange={handleFeatureFileSelect} />
+                          <input
+                            hidden
+                            type="file"
+                            accept="image/*"
+                            onChange={handleFeatureFileSelect}
+                          />
                         </Button>
 
                         <Button
                           size="small"
                           onClick={handleUploadFeatureImage}
-                          disabled={!featureFile || uploadingFeature}
-                          sx={{ textTransform: "none", fontWeight: 600, borderRadius: 999, px: 2, py: 0.6 }}
+                          disabled={
+                            !featureFile || uploadingFeature
+                          }
+                          sx={{
+                            textTransform: "none",
+                            fontWeight: 600,
+                            borderRadius: 999,
+                            px: 2,
+                            py: 0.6,
+                          }}
                         >
-                          {uploadingFeature ? "Uploading..." : "Upload"}
+                          {uploadingFeature
+                            ? "Uploading..."
+                            : "Upload"}
                         </Button>
 
                         {form.featureImageUrl && (
                           <Button
                             size="small"
                             color="error"
-                            onClick={handleDeleteFeatureImage}
-                            sx={{ textTransform: "none", fontWeight: 600, borderRadius: 999, px: 2, py: 0.6 }}
+                            onClick={
+                              handleDeleteFeatureImage
+                            }
+                            sx={{
+                              textTransform: "none",
+                              fontWeight: 600,
+                              borderRadius: 999,
+                              px: 2,
+                              py: 0.6,
+                            }}
                           >
                             Delete image
                           </Button>
@@ -1232,25 +1598,48 @@ export default function Tours() {
                       </Box>
 
                       {featureFileName && (
-                        <Typography variant="caption" sx={{ mt: 0.75, display: "block", color: "text.secondary" }}>
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            mt: 0.75,
+                            display: "block",
+                            color: "text.secondary",
+                          }}
+                        >
                           Selected: {featureFileName}
                         </Typography>
                       )}
                     </Box>
                   </Grid>
 
+                  {/* Gallery images */}
                   <Grid item xs={12} md={6}>
-                    <Typography sx={{ fontWeight: 500, mb: 0.6, color: "#0f172a" }}>
+                    <Typography
+                      sx={{
+                        fontWeight: 500,
+                        mb: 0.6,
+                        color: "#0f172a",
+                      }}
+                    >
                       Gallery Images
                     </Typography>
 
                     {form.galleryImages.map((url, idx) => (
-                      <Box key={idx} sx={{ mt: idx > 0 ? 3 : 0 }}>
+                      <Box
+                        key={idx}
+                        sx={{ mt: idx > 0 ? 3 : 0 }}
+                      >
                         <TextField
                           fullWidth
                           placeholder="https://example.com/gallery-image.jpg"
                           value={url}
-                          onChange={(e) => updateArrayItem("galleryImages", idx, e.target.value)}
+                          onChange={(e) =>
+                            updateArrayItem(
+                              "galleryImages",
+                              idx,
+                              e.target.value
+                            )
+                          }
                           disabled={Boolean(url)}
                           helperText={
                             url
@@ -1260,7 +1649,12 @@ export default function Tours() {
                           InputProps={{
                             endAdornment: url && (
                               <InputAdornment position="end">
-                                <IconButton size="small" onClick={() => copyToClipboard(url)}>
+                                <IconButton
+                                  size="small"
+                                  onClick={() =>
+                                    copyToClipboard(url)
+                                  }
+                                >
                                   <ContentCopyIcon fontSize="small" />
                                 </IconButton>
                               </InputAdornment>
@@ -1269,7 +1663,14 @@ export default function Tours() {
                         />
 
                         <Box sx={{ mt: 1.5 }}>
-                          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 1.5,
+                              flexWrap: "wrap",
+                            }}
+                          >
                             <Button
                               component="label"
                               size="small"
@@ -1279,8 +1680,12 @@ export default function Tours() {
                                 borderRadius: 999,
                                 px: 2,
                                 py: 0.6,
-                                background: "rgba(15,23,42,0.04)",
-                                "&:hover": { background: "rgba(15,23,42,0.08)" },
+                                background:
+                                  "rgba(15,23,42,0.04)",
+                                "&:hover": {
+                                  background:
+                                    "rgba(15,23,42,0.08)",
+                                },
                               }}
                             >
                               Select
@@ -1288,34 +1693,92 @@ export default function Tours() {
                                 hidden
                                 type="file"
                                 accept="image/*"
-                                onChange={(e) => handleGalleryFileSelect(idx, e)}
+                                onChange={(e) =>
+                                  handleGalleryFileSelect(
+                                    idx,
+                                    e
+                                  )
+                                }
                               />
                             </Button>
 
                             <Button
                               size="small"
-                              onClick={() => handleUploadGalleryImage(idx)}
-                              disabled={!galleryFiles[idx] || uploadingGallery[idx]}
-                              sx={{ textTransform: "none", fontWeight: 600, borderRadius: 999, px: 2, py: 0.6 }}
+                              onClick={() =>
+                                handleUploadGalleryImage(
+                                  idx
+                                )
+                              }
+                              disabled={
+                                !galleryFiles[idx] ||
+                                uploadingGallery[idx]
+                              }
+                              sx={{
+                                textTransform: "none",
+                                fontWeight: 600,
+                                borderRadius: 999,
+                                px: 2,
+                                py: 0.6,
+                              }}
                             >
-                              {uploadingGallery[idx] ? "Uploading..." : "Upload"}
+                              {uploadingGallery[idx]
+                                ? "Uploading..."
+                                : "Upload"}
                             </Button>
 
                             {url && (
                               <Button
                                 size="small"
                                 color="error"
-                                onClick={() => handleDeleteGalleryImage(idx)}
-                                sx={{ textTransform: "none", fontWeight: 600, borderRadius: 999, px: 2, py: 0.6 }}
+                                onClick={() =>
+                                  handleDeleteGalleryImage(
+                                    idx
+                                  )
+                                }
+                                sx={{
+                                  textTransform: "none",
+                                  fontWeight: 600,
+                                  borderRadius: 999,
+                                  px: 2,
+                                  py: 0.6,
+                                }}
                               >
                                 Delete image
+                              </Button>
+                            )}
+
+                            {idx > 0 && (
+                              <Button
+                                size="small"
+                                onClick={() =>
+                                  removeGalleryRow(idx)
+                                }
+                                sx={{
+                                  textTransform: "none",
+                                  fontWeight: 600,
+                                  borderRadius: 999,
+                                  px: 2,
+                                  py: 0.6,
+                                  color: "#64748b",
+                                }}
+                              >
+                                Remove row
                               </Button>
                             )}
                           </Box>
 
                           {galleryFileNames[idx] && (
-                            <Typography variant="caption" sx={{ mt: 0.75, display: "block", color: "text.secondary" }}>
-                              Selected: {galleryFileNames[idx]}
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                mt: 0.75,
+                                display: "block",
+                                color: "text.secondary",
+                              }}
+                            >
+                              Selected: {
+                                galleryFileNames[idx]
+                              }
                             </Typography>
                           )}
                         </Box>
@@ -1324,8 +1787,14 @@ export default function Tours() {
 
                     <Button
                       type="button"
-                      onClick={() => addArrayItem("galleryImages", "")}
-                      sx={{ mt: 2, textTransform: "none", fontWeight: 600 }}
+                      onClick={() =>
+                        addArrayItem("galleryImages", "")
+                      }
+                      sx={{
+                        mt: 2,
+                        textTransform: "none",
+                        fontWeight: 600,
+                      }}
                     >
                       + Add Gallery Image
                     </Button>
@@ -1345,28 +1814,77 @@ export default function Tours() {
                   backgroundColor: "#fff",
                 }}
               >
-                <Typography sx={{ fontWeight: 700, fontSize: 18, mb: 2 }}>
+                <Typography
+                  sx={{ fontWeight: 700, fontSize: 18, mb: 2 }}
+                >
                   Tour Highlights
                 </Typography>
 
                 {form.highlights.map((h, idx) => (
-                  <Box key={idx} sx={{ mb: 1.75 }}>
-                    {idx === 0 && (
-                      <Typography sx={{ fontWeight: 500, mb: 0.6, color: "#0f172a" }}>
-                        Highlight
-                      </Typography>
-                    )}
+                  <Box
+                    key={idx}
+                    sx={{
+                      mb: 1.75,
+                      display: "flex",
+                      gap: 1,
+                      alignItems: "flex-start",
+                    }}
+                  >
+                    <Box sx={{ flex: 1 }}>
+                      {idx === 0 && (
+                        <Typography
+                          sx={{
+                            fontWeight: 500,
+                            mb: 0.6,
+                            color: "#0f172a",
+                          }}
+                        >
+                          Highlight
+                        </Typography>
+                      )}
 
-                    <TextField
-                      fullWidth
-                      placeholder="Enter tour highlight"
-                      value={h}
-                      onChange={(e) => updateArrayItem("highlights", idx, e.target.value)}
-                    />
+                      <TextField
+                        fullWidth
+                        placeholder="Enter tour highlight"
+                        value={h}
+                        onChange={(e) =>
+                          updateArrayItem(
+                            "highlights",
+                            idx,
+                            e.target.value
+                          )
+                        }
+                      />
+                    </Box>
+
+                    {idx > 0 && (
+                      <Button
+                        type="button"
+                        onClick={() =>
+                          removeArrayItem("highlights", idx)
+                        }
+                        sx={{
+                          textTransform: "none",
+                          fontWeight: 600,
+                          color: "#64748b",
+                        }}
+                      >
+                        Remove
+                      </Button>
+                    )}
                   </Box>
                 ))}
 
-                <Button type="button" onClick={() => addArrayItem("highlights", "")} sx={{ textTransform: "none", fontWeight: 600 }}>
+                <Button
+                  type="button"
+                  onClick={() =>
+                    addArrayItem("highlights", "")
+                  }
+                  sx={{
+                    textTransform: "none",
+                    fontWeight: 600,
+                  }}
+                >
                   + Add Highlight
                 </Button>
               </Paper>
@@ -1383,7 +1901,9 @@ export default function Tours() {
                   backgroundColor: "#fff",
                 }}
               >
-                <Typography sx={{ fontWeight: 700, fontSize: 18, mb: 2 }}>
+                <Typography
+                  sx={{ fontWeight: 700, fontSize: 18, mb: 2 }}
+                >
                   Itinerary
                 </Typography>
 
@@ -1392,30 +1912,79 @@ export default function Tours() {
                     key={idx}
                     sx={{
                       borderRadius: "16px",
-                      border: "1px solid rgba(148,163,184,0.4)",
+                      border:
+                        "1px solid rgba(148,163,184,0.4)",
                       p: 2.25,
                       mb: 2,
                       background: "#f8fafc",
                     }}
                   >
-                    <Typography sx={{ fontWeight: 600, mb: 1.5, color: "#0f172a" }}>
-                      Day {idx + 1}
-                    </Typography>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        mb: 1.5,
+                      }}
+                    >
+                      <Typography
+                        sx={{
+                          fontWeight: 600,
+                          color: "#0f172a",
+                        }}
+                      >
+                        Day {idx + 1}
+                      </Typography>
+
+                      {idx > 0 && (
+                        <Button
+                          type="button"
+                          onClick={() =>
+                            removeItineraryDay(idx)
+                          }
+                          sx={{
+                            textTransform: "none",
+                            fontWeight: 600,
+                            color: "#64748b",
+                          }}
+                        >
+                          Remove
+                        </Button>
+                      )}
+                    </Box>
 
                     <Box sx={{ mb: 1.5 }}>
-                      <Typography sx={{ fontWeight: 500, mb: 0.6, color: "#0f172a" }}>
+                      <Typography
+                        sx={{
+                          fontWeight: 500,
+                          mb: 0.6,
+                          color: "#0f172a",
+                        }}
+                      >
                         Day Title
                       </Typography>
                       <TextField
                         fullWidth
                         placeholder="e.g., Arrival in Bali"
                         value={day.dayTitle}
-                        onChange={(e) => updateItineraryItem(idx, "dayTitle", e.target.value)}
+                        onChange={(e) =>
+                          updateItineraryItem(
+                            idx,
+                            "dayTitle",
+                            e.target.value
+                          )
+                        }
                       />
                     </Box>
 
                     <Box>
-                      <Typography sx={{ fontWeight: 500, mb: 0.6, color: "#0f172a" }}>
+                      <Typography
+                        sx={{
+                          fontWeight: 500,
+                          mb: 0.6,
+                          color: "#0f172a",
+                        }}
+                      >
                         Description
                       </Typography>
                       <TextField
@@ -1424,19 +1993,32 @@ export default function Tours() {
                         minRows={3}
                         placeholder="Describe the day's activities"
                         value={day.description}
-                        onChange={(e) => updateItineraryItem(idx, "description", e.target.value)}
+                        onChange={(e) =>
+                          updateItineraryItem(
+                            idx,
+                            "description",
+                            e.target.value
+                          )
+                        }
                       />
                     </Box>
                   </Box>
                 ))}
 
-                <Button type="button" onClick={addItineraryDay} sx={{ textTransform: "none", fontWeight: 600 }}>
+                <Button
+                  type="button"
+                  onClick={addItineraryDay}
+                  sx={{
+                    textTransform: "none",
+                    fontWeight: 600,
+                  }}
+                >
                   + Add Day
                 </Button>
               </Paper>
             </Grid>
 
-            {/* RIGHT: Sidebar (fixed width, sticky) */}
+            {/* RIGHT: Sidebar */}
             <Grid
               item
               xs={12}
@@ -1449,8 +2031,21 @@ export default function Tours() {
                 minWidth: 0,
               }}
             >
-              <Box sx={{ position: { md: "sticky" }, top: { md: 20 }, width: "100%" }}>
-                <Box sx={{ display: "flex", flexDirection: "column", gap: 3, width: "100%" }}>
+              <Box
+                sx={{
+                  position: { md: "sticky" },
+                  top: { md: 20 },
+                  width: "100%",
+                }}
+              >
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 3,
+                    width: "100%",
+                  }}
+                >
                   {/* Publish settings */}
                   <Paper
                     elevation={0}
@@ -1463,37 +2058,80 @@ export default function Tours() {
                       width: "100%",
                     }}
                   >
-                    <Typography sx={{ fontWeight: 700, fontSize: 18, mb: 2 }}>
+                    <Typography
+                      sx={{
+                        fontWeight: 700,
+                        fontSize: 18,
+                        mb: 2,
+                      }}
+                    >
                       Publish Settings
                     </Typography>
 
                     <Box sx={{ mb: 2 }}>
-                      <Typography sx={{ fontWeight: 500, mb: 0.6, color: "#0f172a" }}>
+                      <Typography
+                        sx={{
+                          fontWeight: 500,
+                          mb: 0.6,
+                          color: "#0f172a",
+                        }}
+                      >
                         Status
                       </Typography>
                       <FormControl fullWidth>
-                        <Select value={form.status} onChange={(e) => updateField("status", e.target.value)}>
-                          <MenuItem value="draft">Draft</MenuItem>
-                          <MenuItem value="published">Published</MenuItem>
+                        <Select
+                          value={form.status}
+                          onChange={(e) =>
+                            updateField("status", e.target.value)
+                          }
+                        >
+                          <MenuItem value="draft">
+                            Draft
+                          </MenuItem>
+                          <MenuItem value="published">
+                            Published
+                          </MenuItem>
                         </Select>
                       </FormControl>
                     </Box>
 
                     <Box>
-                      <Typography sx={{ fontWeight: 500, mb: 0.6, color: "#0f172a" }}>
+                      <Typography
+                        sx={{
+                          fontWeight: 500,
+                          mb: 0.6,
+                          color: "#0f172a",
+                        }}
+                      >
                         Category
                       </Typography>
                       <Autocomplete
                         options={tourCategories}
                         loading={loadingCategories}
-                        getOptionLabel={(option) => option?.name || ""}
-                        value={tourCategories.find((c) => c.id === form.categoryId) || null}
+                        getOptionLabel={(option) =>
+                          option?.name || ""
+                        }
+                        value={
+                          tourCategories.find(
+                            (c) => c.id === form.categoryId
+                          ) || null
+                        }
                         onChange={(_, newValue) => {
-                          updateField("categoryId", newValue?.id || "");
-                          updateField("categoryName", newValue?.name || "");
+                          updateField(
+                            "categoryId",
+                            newValue?.id || ""
+                          );
+                          updateField(
+                            "categoryName",
+                            newValue?.name || ""
+                          );
                         }}
                         renderInput={(params) => (
-                          <TextField {...params} required placeholder="e.g., Adventure, Cultural" />
+                          <TextField
+                            {...params}
+                            required
+                            placeholder="e.g., Adventure, Cultural"
+                          />
                         )}
                       />
                     </Box>
@@ -1511,24 +2149,47 @@ export default function Tours() {
                       width: "100%",
                     }}
                   >
-                    <Typography sx={{ fontWeight: 700, fontSize: 18, mb: 2 }}>
+                    <Typography
+                      sx={{
+                        fontWeight: 700,
+                        fontSize: 18,
+                        mb: 2,
+                      }}
+                    >
                       SEO Settings
                     </Typography>
 
                     <Box sx={{ mb: 2 }}>
-                      <Typography sx={{ fontWeight: 500, mb: 0.6, color: "#0f172a" }}>
+                      <Typography
+                        sx={{
+                          fontWeight: 500,
+                          mb: 0.6,
+                          color: "#0f172a",
+                        }}
+                      >
                         Meta Title
                       </Typography>
                       <TextField
                         fullWidth
                         placeholder="Optional – defaults to tour title"
                         value={form.metaTitle}
-                        onChange={(e) => updateField("metaTitle", e.target.value)}
+                        onChange={(e) =>
+                          updateField(
+                            "metaTitle",
+                            e.target.value
+                          )
+                        }
                       />
                     </Box>
 
                     <Box sx={{ mb: 2 }}>
-                      <Typography sx={{ fontWeight: 500, mb: 0.6, color: "#0f172a" }}>
+                      <Typography
+                        sx={{
+                          fontWeight: 500,
+                          mb: 0.6,
+                          color: "#0f172a",
+                        }}
+                      >
                         Meta Description
                       </Typography>
                       <TextField
@@ -1537,19 +2198,35 @@ export default function Tours() {
                         minRows={3}
                         placeholder="Short summary for Google & social sharing"
                         value={form.metaDescription}
-                        onChange={(e) => updateField("metaDescription", e.target.value)}
+                        onChange={(e) =>
+                          updateField(
+                            "metaDescription",
+                            e.target.value
+                          )
+                        }
                       />
                     </Box>
 
                     <Box>
-                      <Typography sx={{ fontWeight: 500, mb: 0.6, color: "#0f172a" }}>
+                      <Typography
+                        sx={{
+                          fontWeight: 500,
+                          mb: 0.6,
+                          color: "#0f172a",
+                        }}
+                      >
                         Meta Keywords
                       </Typography>
                       <TextField
                         fullWidth
                         placeholder="e.g., varanasi tour, spiritual trip, ganga aarti"
                         value={form.metaKeywords}
-                        onChange={(e) => updateField("metaKeywords", e.target.value)}
+                        onChange={(e) =>
+                          updateField(
+                            "metaKeywords",
+                            e.target.value
+                          )
+                        }
                       />
                     </Box>
                   </Paper>
@@ -1566,22 +2243,69 @@ export default function Tours() {
                       width: "100%",
                     }}
                   >
-                    <Typography sx={{ fontWeight: 700, fontSize: 18, mb: 2 }}>
+                    <Typography
+                      sx={{
+                        fontWeight: 700,
+                        fontSize: 18,
+                        mb: 2,
+                      }}
+                    >
                       What's Included
                     </Typography>
 
                     {form.included.map((item, idx) => (
-                      <Box key={idx} sx={{ mb: 1.75 }}>
+                      <Box
+                        key={idx}
+                        sx={{
+                          mb: 1.75,
+                          display: "flex",
+                          gap: 1,
+                          alignItems: "flex-start",
+                        }}
+                      >
                         <TextField
                           fullWidth
                           placeholder="e.g., Accommodation"
                           value={item}
-                          onChange={(e) => updateArrayItem("included", idx, e.target.value)}
+                          onChange={(e) =>
+                            updateArrayItem(
+                              "included",
+                              idx,
+                              e.target.value
+                            )
+                          }
                         />
+                        {idx > 0 && (
+                          <Button
+                            type="button"
+                            onClick={() =>
+                              removeArrayItem(
+                                "included",
+                                idx
+                              )
+                            }
+                            sx={{
+                              textTransform: "none",
+                              fontWeight: 600,
+                              color: "#64748b",
+                            }}
+                          >
+                            Remove
+                          </Button>
+                        )}
                       </Box>
                     ))}
 
-                    <Button type="button" onClick={() => addArrayItem("included", "")} sx={{ textTransform: "none", fontWeight: 600 }}>
+                    <Button
+                      type="button"
+                      onClick={() =>
+                        addArrayItem("included", "")
+                      }
+                      sx={{
+                        textTransform: "none",
+                        fontWeight: 600,
+                      }}
+                    >
                       + Add Item
                     </Button>
                   </Paper>
@@ -1598,22 +2322,69 @@ export default function Tours() {
                       width: "100%",
                     }}
                   >
-                    <Typography sx={{ fontWeight: 700, fontSize: 18, mb: 2 }}>
+                    <Typography
+                      sx={{
+                        fontWeight: 700,
+                        fontSize: 18,
+                        mb: 2,
+                      }}
+                    >
                       What's Excluded
                     </Typography>
 
                     {form.excluded.map((item, idx) => (
-                      <Box key={idx} sx={{ mb: 1.75 }}>
+                      <Box
+                        key={idx}
+                        sx={{
+                          mb: 1.75,
+                          display: "flex",
+                          gap: 1,
+                          alignItems: "flex-start",
+                        }}
+                      >
                         <TextField
                           fullWidth
                           placeholder="e.g., International flights"
                           value={item}
-                          onChange={(e) => updateArrayItem("excluded", idx, e.target.value)}
+                          onChange={(e) =>
+                            updateArrayItem(
+                              "excluded",
+                              idx,
+                              e.target.value
+                            )
+                          }
                         />
+                        {idx > 0 && (
+                          <Button
+                            type="button"
+                            onClick={() =>
+                              removeArrayItem(
+                                "excluded",
+                                idx
+                              )
+                            }
+                            sx={{
+                              textTransform: "none",
+                              fontWeight: 600,
+                              color: "#64748b",
+                            }}
+                          >
+                            Remove
+                          </Button>
+                        )}
                       </Box>
                     ))}
 
-                    <Button type="button" onClick={() => addArrayItem("excluded", "")} sx={{ textTransform: "none", fontWeight: 600 }}>
+                    <Button
+                      type="button"
+                      onClick={() =>
+                        addArrayItem("excluded", "")
+                      }
+                      sx={{
+                        textTransform: "none",
+                        fontWeight: 600,
+                      }}
+                    >
                       + Add Item
                     </Button>
                   </Paper>
@@ -1632,17 +2403,27 @@ export default function Tours() {
                         textTransform: "none",
                         background: "#fb6376",
                         color: "#fff",
-                        "&:hover": { background: "#f97373" },
+                        "&:hover": {
+                          background: "#f97373",
+                        },
                       }}
                     >
-                      {saving ? "Saving…" : editingId ? "Update Tour" : "Save Tour"}
+                      {saving
+                        ? "Saving…"
+                        : editingId
+                        ? "Update Tour"
+                        : "Save Tour"}
                     </Button>
 
                     <Button
                       type="button"
                       fullWidth
                       onClick={handleCancel}
-                      sx={{ textTransform: "none", fontWeight: 600, color: "#64748b" }}
+                      sx={{
+                        textTransform: "none",
+                        fontWeight: 600,
+                        color: "#64748b",
+                      }}
                     >
                       Cancel
                     </Button>

@@ -167,7 +167,7 @@ function CategoryDialog({
     >
       <DialogTitle
         sx={{
-          fontWeight: 800,
+          fontWeight: 600,
           fontSize: 20,
           display: "flex",
           alignItems: "center",
@@ -249,7 +249,7 @@ function CategoryDialog({
                     borderRadius: 999,
                     px: 2,
                     py: 0.6,
-                    fontWeight: 800,
+                    fontWeight: 600,
                     background: "rgba(15,23,42,0.04)",
                     "&:hover": {
                       background: "rgba(15,23,42,0.08)",
@@ -274,7 +274,7 @@ function CategoryDialog({
                     borderRadius: 999,
                     px: 2,
                     py: 0.6,
-                    fontWeight: 800,
+                    fontWeight: 600,
                   }}
                 >
                   {uploadingImage ? "Uploading..." : "Upload"}
@@ -288,10 +288,10 @@ function CategoryDialog({
                     disabled={deletingImage}
                     sx={{
                       textTransform: "none",
-                      borderRadius: 999,
+                      // borderRadius: 999,
                       px: 2,
                       py: 0.6,
-                      fontWeight: 800,
+                      fontWeight: 600,
                     }}
                   >
                     {deletingImage ? "Deleting..." : "Delete image"}
@@ -429,7 +429,7 @@ export default function TourCategories() {
         <Box>
           <Typography
             variant="h4"
-            sx={{ fontWeight: 800, mb: 0.5, letterSpacing: "-0.03em" }}
+            sx={{ fontWeight: 600, mb: 0.5, letterSpacing: "-0.03em" }}
           >
             Tour Categories
           </Typography>
@@ -450,6 +450,7 @@ export default function TourCategories() {
             borderRadius: 999,
             px: 3,
             whiteSpace: "nowrap",
+            fontWeight:600,
           }}
         >
           + Add Category
@@ -497,6 +498,7 @@ export default function TourCategories() {
               sx={{
                 bgcolor: "rgba(15,23,42,0.02)",
                 borderRadius: 999,
+                fontWeight:600,
               }}
             >
               Filter
@@ -506,6 +508,7 @@ export default function TourCategories() {
               sx={{
                 bgcolor: "rgba(15,23,42,0.02)",
                 borderRadius: 999,
+                fontWeight:600,
               }}
             >
               Export
@@ -537,7 +540,7 @@ export default function TourCategories() {
             <Grid item xs={12} sm={6} md={4} key={category.id}>
               <Card
                 sx={{
-                  borderRadius: 4,
+                  // borderRadius: 4,
                   overflow: "hidden",
                   height: "100%",
                 }}
@@ -603,7 +606,7 @@ export default function TourCategories() {
                       <Typography
                         variant="h6"
                         sx={{
-                          fontWeight: 800,
+                          fontWeight: 600,
                           letterSpacing: "-0.02em",
                           fontSize: 18,
                         }}
