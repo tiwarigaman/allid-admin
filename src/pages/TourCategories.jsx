@@ -18,6 +18,7 @@ import {
   Stack,
   TextField,
   Typography,
+  LinearProgress, // 👈 added for upload progress
 } from "@mui/material";
 
 import SearchIcon from "@mui/icons-material/Search";
@@ -66,6 +67,7 @@ function CategoryDialog({
   const [selectedFileName, setSelectedFileName] = useState("");
   const [uploadingImage, setUploadingImage] = useState(false);
   const [deletingImage, setDeletingImage] = useState(false);
+  const [submitting, setSubmitting] = useState(false); // 👈 prevent double submit
 
   useEffect(() => {
     if (open && initialData) {
@@ -74,12 +76,18 @@ function CategoryDialog({
       setImageUrl(initialData.imageUrl || "");
       setSelectedFile(null);
       setSelectedFileName("");
+      setUploadingImage(false);
+      setDeletingImage(false);
+      setSubmitting(false);
     } else if (open && !initialData) {
       setName("");
       setDescription("");
       setImageUrl("");
       setSelectedFile(null);
       setSelectedFileName("");
+      setUploadingImage(false);
+      setDeletingImage(false);
+      setSubmitting(false);
     }
   }, [open, initialData]);
 
@@ -89,12 +97,15 @@ function CategoryDialog({
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!name.trim()) return;
+    if (submitting) return; // 👈 ignore extra clicks while saving
 
+    setSubmitting(true);
     await onSave({
       name,
       description,
       imageUrl,
     });
+    // no need to setSubmitting(false) – dialog usually closes after save
   };
 
   const slugPreview = slugPreviewFromName(name);
@@ -120,9 +131,33 @@ function CategoryDialog({
 
     setUploadingImage(true);
     try {
-      const { url } = await uploadCategoryImage(selectedFile, categoryType);
-      // At a time we keep only one -> override URL field
-      setImageUrl(url);
+      const uploaded = await uploadCategoryImage(selectedFile, categoryType);
+
+      // 👇 make this robust no matter what the API returns
+      let url = "";
+      if (typeof uploaded === "string") {
+        url = uploaded;
+      } else if (uploaded && typeof uploaded === "object") {
+        url =
+          uploaded.url ||
+          uploaded.downloadURL ||
+          uploaded.downloadUrl ||
+          "";
+      }
+
+      if (!url) {
+        console.warn(
+          "uploadCategoryImage did not return a URL. Result:",
+          uploaded
+        );
+        window.alert(
+          "Image uploaded, but no URL was returned. Please check your API response."
+        );
+      } else {
+        // At a time we keep only one -> override URL field
+        setImageUrl(url);
+      }
+
       setSelectedFile(null);
       setSelectedFileName("");
     } catch (err) {
@@ -288,7 +323,6 @@ function CategoryDialog({
                     disabled={deletingImage}
                     sx={{
                       textTransform: "none",
-                      // borderRadius: 999,
                       px: 2,
                       py: 0.6,
                       fontWeight: 600,
@@ -311,17 +345,27 @@ function CategoryDialog({
                   Selected: {selectedFileName}
                 </Typography>
               )}
+
+              {/* 👇 simple progress indicator while uploading */}
+              {uploadingImage && (
+                <Box sx={{ mt: 1 }}>
+                  <LinearProgress />
+                </Box>
+              )}
             </Box>
           </Box>
         </DialogContent>
 
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose} disabled={submitting}>
+            Cancel
+          </Button>
           <Button
             type="submit"
             variant="contained"
             color="primary"
             disableElevation
+            disabled={submitting} // 👈 stop double-clicks
           >
             {buttonLabel}
           </Button>
@@ -450,7 +494,7 @@ export default function TourCategories() {
             borderRadius: 999,
             px: 3,
             whiteSpace: "nowrap",
-            fontWeight:600,
+            fontWeight: 600,
           }}
         >
           + Add Category
@@ -498,7 +542,7 @@ export default function TourCategories() {
               sx={{
                 bgcolor: "rgba(15,23,42,0.02)",
                 borderRadius: 999,
-                fontWeight:600,
+                fontWeight: 600,
               }}
             >
               Filter
@@ -508,7 +552,7 @@ export default function TourCategories() {
               sx={{
                 bgcolor: "rgba(15,23,42,0.02)",
                 borderRadius: 999,
-                fontWeight:600,
+                fontWeight: 600,
               }}
             >
               Export
