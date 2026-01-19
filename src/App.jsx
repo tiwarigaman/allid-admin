@@ -17,6 +17,7 @@ import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Tours from "./pages/Tours";
 import TourCategories from "./pages/TourCategories";
+import Enquiry from "./pages/Enquiry";
 // later: import BlogCategories from "./pages/BlogCategories";
 
 // later: Blogs, Enquiries, etc.
@@ -49,6 +50,7 @@ function App() {
 
             <Route path="categories/tours" element={<TourCategories />} />
             {/* <Route path="categories/blogs" element={<BlogCategories />} /> */}
+            <Route path="enquiries" element={<Enquiry />} />
 
             {/* later:
             <Route path="blogs" element={<Blogs />} />
