@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { db } from "../firebase";
 import {
   collection,
@@ -13,6 +13,12 @@ export default function Categories() {
   const [name, setName] = useState("");
   const [type, setType] = useState("tour");
   const [categories, setCategories] = useState([]);
+    React.useEffect(() => {
+      document.title = "Categories | All India Destination (Admin)";
+      return () => {
+        document.title = "All India Destination – Explore India Tours";
+      };
+    }, []);
 
   const categoriesRef = collection(db, "categories");
 

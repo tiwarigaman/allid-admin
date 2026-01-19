@@ -383,6 +383,12 @@ export default function TourCategories() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState("create"); // "create" | "edit"
   const [selectedCategory, setSelectedCategory] = useState(null);
+    React.useEffect(() => {
+      document.title = "Tour Categories | All India Destination (Admin)";
+      return () => {
+        document.title = "All India Destination – Explore India Tours";
+      };
+    }, []);
 
   const loadCategories = async () => {
     try {

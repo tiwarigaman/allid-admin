@@ -215,6 +215,12 @@ function ListRow({ icon, title, sub, showChip = false }) {
 
 export default function Dashboard() {
   const [range, setRange] = React.useState("7");
+  React.useEffect(() => {
+    document.title = "Dashboard | All India Destination (Admin)";
+    return () => {
+      document.title = "All India Destination – Explore India Tours";
+    };
+  }, []);
 
   const tours = [
     { title: "Golden Triangle Adventure", sub: "Delhi, Agra, Jaipur" },

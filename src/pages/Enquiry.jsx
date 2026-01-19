@@ -62,6 +62,12 @@ export default function Enquiry() {
   const [toDate, setToDate] = useState("");
   const [followFilter, setFollowFilter] = useState("all"); // "all" | "pending" | "done"
 
+  React.useEffect(() => {
+    document.title = "Enquiry | All India Destination (Admin)";
+    return () => {
+      document.title = "All India Destination – Explore India Tours";
+    };
+  }, []);
   // pagination
   const [page, setPage] = useState(1);
   const pageSize = 10;

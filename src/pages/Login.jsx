@@ -3,7 +3,7 @@ import { signInWithEmailAndPassword } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 import { auth } from "../firebase";
 import { ADMIN_EMAILS } from "../auth/adminEmails";
-
+import React from "react";
 export default function Login() {
   const navigate = useNavigate();
 
@@ -11,6 +11,12 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+    React.useEffect(() => {
+    document.title = "Login | All India Destination (Admin)";
+    return () => {
+      document.title = "All India Destination – Explore India Tours";
+    };
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
