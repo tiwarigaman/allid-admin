@@ -5,12 +5,8 @@ import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 import { getAnalytics, isSupported } from "firebase/analytics";
 
-// ✅ App Check
-import {
-  initializeAppCheck,
-  ReCaptchaV3Provider,
-  debugProvider,
-} from "firebase/app-check";
+// App Check
+import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -26,17 +22,26 @@ const app = initializeApp(firebaseConfig);
 
 /**
  * =====================================================
- * 🔐 APP CHECK
- * DEV  : debug provider (requires adding debug token in Firebase Console)
- * PROD : reCAPTCHA v3 provider
+ * 🔐 APP CHECK (compatible with older Firebase SDKs)
  * =====================================================
+ *
+ * PROD: reCAPTCHA v3 provider
+ * DEV : debug token mode + still uses reCAPTCHA provider (OK)
+ *
+ * IMPORTANT:
+ * - In DEV, Firebase prints a debug token in console. Add it in:
+ *   Firebase Console → App Check → Debug tokens
  */
-const appCheckProvider = import.meta.env.PROD
-  ? new ReCaptchaV3Provider(import.meta.env.VITE_FIREBASE_RECAPTCHA_V3_SITE_KEY)
-  : debugProvider(); // ✅ explicit debug provider fixes your error
+if (import.meta.env.DEV) {
+  // enables debug token mode (Firebase will print token)
+  self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+}
 
+// Always provide ReCaptchaV3Provider (works for both DEV + PROD)
 export const appCheck = initializeAppCheck(app, {
-  provider: appCheckProvider,
+  provider: new ReCaptchaV3Provider(
+    import.meta.env.VITE_FIREBASE_RECAPTCHA_V3_SITE_KEY
+  ),
   isTokenAutoRefreshEnabled: true,
 });
 
