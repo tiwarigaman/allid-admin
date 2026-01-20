@@ -5,10 +5,11 @@ import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 import { getAnalytics, isSupported } from "firebase/analytics";
 
-// App Check
+// ✅ App Check
 import {
   initializeAppCheck,
   ReCaptchaV3Provider,
+  debugProvider,
 } from "firebase/app-check";
 
 const firebaseConfig = {
@@ -25,29 +26,21 @@ const app = initializeApp(firebaseConfig);
 
 /**
  * =====================================================
- * 🔐 APP CHECK (SAFE FOR DEV + PROD)
+ * 🔐 APP CHECK
+ * DEV  : debug provider (requires adding debug token in Firebase Console)
+ * PROD : reCAPTCHA v3 provider
  * =====================================================
- *
- * DEV  (localhost): uses debug token
- * PROD (real domain): uses reCAPTCHA v3
  */
-if (import.meta.env.PROD) {
-  // ✅ PRODUCTION — NO DEBUG TOKEN
-  initializeAppCheck(app, {
-    provider: new ReCaptchaV3Provider(
-      import.meta.env.VITE_FIREBASE_RECAPTCHA_V3_SITE_KEY
-    ),
-    isTokenAutoRefreshEnabled: true,
-  });
-} else {
-  // ✅ LOCAL DEVELOPMENT ONLY
-  self.FIREBASE_APPCHECK_DEBUG_TOKEN = true; // logs token once
-  initializeAppCheck(app, {
-    isTokenAutoRefreshEnabled: true,
-  });
-}
+const appCheckProvider = import.meta.env.PROD
+  ? new ReCaptchaV3Provider(import.meta.env.VITE_FIREBASE_RECAPTCHA_V3_SITE_KEY)
+  : debugProvider(); // ✅ explicit debug provider fixes your error
 
-// Analytics only runs in browser (safe)
+export const appCheck = initializeAppCheck(app, {
+  provider: appCheckProvider,
+  isTokenAutoRefreshEnabled: true,
+});
+
+// Analytics only runs in browser
 isSupported().then((yes) => {
   if (yes) getAnalytics(app);
 });
