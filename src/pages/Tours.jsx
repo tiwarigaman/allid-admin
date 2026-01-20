@@ -120,7 +120,7 @@ function tourDocToForm(tour) {
 export default function Tours() {
   const [tab, setTab] = useState(0);
     React.useEffect(() => {
-      document.title = "Tours | All India Destination (Admin)";
+      document.title = "Tour | All India Destination (Admin)";
       return () => {
         document.title = "All India Destination – Explore India Tours";
       };

@@ -5,6 +5,9 @@ import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 import { getAnalytics, isSupported } from "firebase/analytics";
 
+// ✅ App Check
+import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
+
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
@@ -17,7 +20,23 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 
-// Analytics only runs in browser (safe for VPS)
+/**
+ * ✅ App Check required because Firestore/Storage are ENFORCED
+ * DEV: uses debug token for localhost
+ * PROD: uses reCAPTCHA v3 site key
+ */
+if (import.meta.env.DEV) {
+  self.FIREBASE_APPCHECK_DEBUG_TOKEN = true; // prints debug token in console
+}
+
+initializeAppCheck(app, {
+  provider: new ReCaptchaV3Provider(
+    import.meta.env.VITE_FIREBASE_RECAPTCHA_V3_SITE_KEY
+  ),
+  isTokenAutoRefreshEnabled: true,
+});
+
+// Analytics only runs in browser
 isSupported().then((yes) => {
   if (yes) getAnalytics(app);
 });
